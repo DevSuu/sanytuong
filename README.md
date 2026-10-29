@@ -29,7 +29,7 @@ Hệ thống cổng thông tin trực tuyến phục vụ cuộc thi **Thử th�
 
 ---
 
-## 3. Hướng dẫn Triển khai cho Bộ phận IT (Docker Compose)
+## 3. Hướng dẫn Triển khai (Docker Compose)
 
 ### Bước 1: Clone mã nguồn và tạo tệp `.env`
 ```bash
