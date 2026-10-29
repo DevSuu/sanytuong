@@ -1,0 +1,726 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------------------------------------------
+// INFRASTRUCTURE PROBE
+// -------------------------------------------------------------
+model SystemProbe {
+  id        Int      @id
+  label     String
+  createdAt DateTime @default(now())
+}
+
+// -------------------------------------------------------------
+// BETTER AUTH (ADMIN AUTHENTICATION)
+// -------------------------------------------------------------
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("ADMIN")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// -------------------------------------------------------------
+// SUBMISSION & APPLICANT DOMAIN
+// -------------------------------------------------------------
+model Submitter {
+  id                String    @id @default(cuid())
+  fullName          String
+  studentCode       String
+  className         String?
+  major             String?
+  phone             String?
+  bankAccountNumber String?
+  bankName          String?
+  bankBranch        String?
+  email             String
+  emailNormalized   String    @unique
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  ideas              Idea[]
+  lookupCredential   LookupCredential?
+  verificationTokens EmailVerificationToken[]
+  taskApplications   TaskApplication[]
+
+  @@index([emailNormalized])
+  @@index([studentCode])
+  @@map("submitter")
+}
+
+enum IdeaStatus {
+  PENDING_VERIFICATION
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+}
+
+model Idea {
+  id                 String     @id @default(cuid())
+  referenceCode      String     @unique
+  submitterId        String
+  submitter          Submitter  @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  title              String
+  description        String     @db.Text
+  field              String?
+  expectedProduct    String?    @db.Text
+  necessity          String?    @db.Text
+  innovation         String?    @db.Text
+  feasibility        String?    @db.Text
+  potential          String?    @db.Text
+  needsMemberSupport Boolean    @default(false)
+  status             IdeaStatus @default(PENDING_VERIFICATION)
+  version            Int        @default(1)
+  submittedAt        DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  statusHistory      IdeaStatusHistory[]
+  verificationTokens EmailVerificationToken[]
+  projectProfile     ProjectProfile?
+  profileHistory     ProfileHistory[]
+  recruitmentPost    IdeaRecruitmentPost?
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([submitterId])
+  @@index([field])
+  @@map("idea")
+}
+
+model IdeaStatusHistory {
+  id        String     @id @default(cuid())
+  ideaId    String
+  idea      Idea       @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actorType String     @default("ADMIN") // "ADMIN" | "SYSTEM"
+  oldStatus IdeaStatus
+  newStatus IdeaStatus
+  reason    String?    @db.Text
+  createdAt DateTime   @default(now())
+
+  @@index([ideaId])
+  @@index([createdAt])
+  @@map("idea_status_history")
+}
+
+model EmailVerificationToken {
+  id          String    @id @default(cuid())
+  submitterId String
+  submitter   Submitter @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  ideaId      String?
+  idea        Idea?     @relation(fields: [ideaId], references: [id], onDelete: SetNull)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("email_verification_token")
+}
+
+model LookupCredential {
+  id             String    @id @default(cuid())
+  submitterId    String    @unique
+  submitter      Submitter @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  tokenHash      String    @unique
+  encryptedToken String    @db.Text
+  createdAt      DateTime  @default(now())
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+
+  @@index([tokenHash])
+  @@map("lookup_credential")
+}
+
+// -------------------------------------------------------------
+// TRANSACTIONAL EMAIL QUEUE
+// -------------------------------------------------------------
+enum EmailJobType {
+  VERIFY_EMAIL
+  LOOKUP_LINK
+  IDEA_APPROVED
+  IDEA_REJECTED
+  IDEA_REVISION_REQUESTED
+  EDIT_REQUEST_REJECTED
+  EDIT_REQUEST_APPROVED
+  PROFILE_REVISION_REQUESTED
+  PROFILE_COMPLETED
+  TASK_APPLICATION_SUBMITTED
+  TASK_APPLICATION_SELECTED
+  TASK_APPLICATION_NOT_SELECTED
+  TASK_ASSIGNED
+  TASK_COMPLETED
+  VERIFY_TASK_APPLICATION
+  RECRUITMENT_APPLICATION_OTP
+  RECRUITMENT_APPLICATION_VERIFIED_LEADER_NOTICE
+  RECRUITMENT_APPLICATION_ACCEPTED
+  RECRUITMENT_APPLICATION_REJECTED
+}
+
+enum EmailJobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model EmailJob {
+  id             String         @id @default(cuid())
+  type           EmailJobType
+  recipient      String
+  payload        Json
+  status         EmailJobStatus @default(PENDING)
+  attempts       Int            @default(0)
+  maxAttempts    Int            @default(5)
+  availableAt    DateTime       @default(now())
+  lockedAt       DateTime?
+  lastError      String?        @db.Text
+  idempotencyKey String?        @unique
+  createdAt      DateTime       @default(now())
+  processedAt    DateTime?
+
+  @@index([status, availableAt])
+  @@index([createdAt])
+  @@map("email_job")
+}
+
+// -------------------------------------------------------------
+// PHASE 2C: PROJECT PROFILE & MEMBERS DOMAIN
+// -------------------------------------------------------------
+enum ProjectProfileStatus {
+  NOT_STARTED
+  DRAFT
+  SUBMITTED
+  NEEDS_REVISION
+  COMPLETED
+}
+
+enum MemberType {
+  STUDENT
+  ADVISOR
+}
+
+model ProjectProfile {
+  id          String               @id @default(cuid())
+  ideaId      String               @unique
+  idea        Idea                 @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  status      ProjectProfileStatus @default(DRAFT)
+  version     Int                  @default(1)
+  submittedAt DateTime?
+  completedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  members      ProjectMember[]
+  editRequests ProfileEditRequest[]
+  history      ProfileHistory[]
+
+  @@index([status])
+  @@index([ideaId])
+  @@map("project_profile")
+}
+
+model ProjectMember {
+  id          String         @id @default(cuid())
+  profileId   String
+  profile     ProjectProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  memberType  MemberType
+  isLeader    Boolean        @default(false)
+  fullName    String
+  email       String
+  studentCode String?
+  className   String?
+  phone       String?
+  department  String?
+  orderIndex  Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([profileId])
+  @@index([studentCode])
+  @@index([email])
+  @@map("project_member")
+}
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ProfileEditRequest {
+  id              String            @id @default(cuid())
+  profileId       String
+  profile         ProjectProfile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  requestedBy     String
+  reason          String            @db.Text
+  requestedFields String[]
+  allowedFields   String[]          @default([])
+  status          EditRequestStatus @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?           @db.Text
+  adminNote       String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([profileId])
+  @@index([status])
+  @@map("profile_edit_request")
+}
+
+enum ProfileHistoryAction {
+  PROFILE_CREATED
+  PROFILE_SAVED_DRAFT
+  PROFILE_SUBMITTED
+  PROFILE_NEEDS_REVISION
+  PROFILE_COMPLETED
+  ADMIN_EDITED_PROFILE
+  PROFILE_EDIT_REQUEST_CREATED
+  PROFILE_EDIT_REQUEST_APPROVED
+  PROFILE_EDIT_REQUEST_REJECTED
+}
+
+model ProfileHistory {
+  id        String               @id @default(cuid())
+  profileId String
+  profile   ProjectProfile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  ideaId    String
+  idea      Idea                 @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actorRole String               // "LEADER" | "ADMIN" | "SYSTEM"
+  action    ProfileHistoryAction
+  reason    String?              @db.Text
+  metadata  Json?
+  createdAt DateTime             @default(now())
+
+  @@index([profileId])
+  @@index([ideaId])
+  @@index([createdAt])
+  @@map("profile_history")
+}
+
+// -------------------------------------------------------------
+// PHASE 3: TASK HALL & TASK APPLICATIONS DOMAIN
+// -------------------------------------------------------------
+enum TaskStatus {
+  DRAFT
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+  CANCELLED
+}
+
+model Task {
+  id                    String            @id @default(cuid())
+  title                 String
+  slug                  String            @unique
+  description           String            @db.Text
+  requirements          String?           @db.Text
+  orderingOrganization  String
+  reward                String?
+  category              String?
+  applicationDeadline   DateTime?
+  executionDeadline     DateTime?
+  status                TaskStatus        @default(DRAFT)
+  createdBy             String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  applications          TaskApplication[]
+  history               TaskHistory[]
+
+  @@index([status])
+  @@index([slug])
+  @@index([createdAt])
+  @@map("task")
+}
+
+enum TaskHistoryAction {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_APPLICATION_SELECTED
+}
+
+model TaskHistory {
+  id        String            @id @default(cuid())
+  taskId    String
+  task      Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actorRole String            // "ADMIN" | "SYSTEM"
+  action    TaskHistoryAction
+  reason    String?           @db.Text
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("task_history")
+}
+
+enum TaskApplicationStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  SUBMITTED
+  SELECTED
+  NOT_SELECTED
+  CANCELLED
+}
+
+model TaskApplication {
+  id             String                   @id @default(cuid())
+  taskId         String
+  task           Task                     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  submitterId    String
+  submitter      Submitter                @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  proposal       String                   @db.Text
+  status         TaskApplicationStatus    @default(SUBMITTED)
+  submittedAt    DateTime?
+  selectedAt     DateTime?
+  adminFeedback  String?                  @db.Text
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  members        TaskApplicationMember[]
+  history        TaskApplicationHistory[]
+  verifications  TaskApplicationVerification[]
+
+  @@index([taskId])
+  @@index([submitterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("task_application")
+}
+
+model TaskApplicationMember {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   TaskApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  memberType    MemberType
+  isLeader      Boolean         @default(false)
+  fullName      String
+  email         String
+  studentCode   String?
+  className     String?
+  phone         String?
+  department    String?
+  orderIndex    Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([applicationId])
+  @@index([studentCode])
+  @@index([email])
+  @@map("task_application_member")
+}
+
+enum TaskApplicationHistoryAction {
+  APPLICATION_DRAFT_SAVED
+  APPLICATION_SUBMITTED
+  APPLICATION_UPDATED
+  APPLICATION_SELECTED
+  APPLICATION_NOT_SELECTED
+  APPLICATION_CANCELLED
+}
+
+model TaskApplicationHistory {
+  id            String                       @id @default(cuid())
+  applicationId String
+  application   TaskApplication              @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actorId       String?
+  actorRole     String                       // "LEADER" | "ADMIN" | "SYSTEM"
+  action        TaskApplicationHistoryAction
+  reason        String?                      @db.Text
+  metadata      Json?
+  createdAt     DateTime                     @default(now())
+
+  @@index([applicationId])
+  @@index([createdAt])
+  @@map("task_application_history")
+}
+
+model TaskApplicationVerification {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   TaskApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  email         String
+  otpHash       String
+  attempts      Int             @default(0)
+  maxAttempts   Int             @default(5)
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([applicationId])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("task_application_verification")
+}
+
+// -------------------------------------------------------------
+// PHASE 4: AWARDS & SEASONS DOMAIN
+// -------------------------------------------------------------
+enum AwardSeasonStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model AwardSeason {
+  id           String            @id @default(cuid())
+  name         String
+  slug         String            @unique
+  description  String?           @db.Text
+  status       AwardSeasonStatus @default(DRAFT)
+  year         Int?
+  startDate    DateTime?
+  endDate      DateTime?
+  isDemo       Boolean           @default(false)
+  displayOrder Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  awards       Award[]
+
+  @@index([status])
+  @@index([displayOrder])
+  @@map("award_season")
+}
+
+enum AwardStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Award {
+  id               String       @id @default(cuid())
+  seasonId         String
+  season           AwardSeason  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  title            String
+  slug             String       @unique
+  shortDescription String?      @db.Text
+  description      String       @db.Text
+  awardName        String       // e.g. "Giải Nhất", "Giải Nhì", "Giải Ba", "Giải Khuyến khích", "Giải Tiềm năng"
+  category         String?      // e.g. "Giao thông thông minh", "Trí tuệ nhân tạo", "Robot & Tự động hóa"
+  organization     String?      // Đơn vị / Khoa viện
+  imageUrl         String?
+  videoUrl         String?
+  displayOrder     Int          @default(0)
+  status           AwardStatus  @default(DRAFT)
+  isDemo           Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  members          AwardMember[]
+  history          AwardHistory[]
+
+  @@index([seasonId])
+  @@index([status])
+  @@index([category])
+  @@index([awardName])
+  @@index([displayOrder])
+  @@index([createdAt])
+  @@map("award")
+}
+
+model AwardMember {
+  id          String   @id @default(cuid())
+  awardId     String
+  award       Award    @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  fullName    String
+  studentCode String?
+  className   String?
+  role        String?  // "Trưởng nhóm" | "Thành viên" | "GVHD"
+  department  String?
+  displayOrder Int     @default(0)
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([awardId])
+  @@map("award_member")
+}
+
+enum AwardHistoryAction {
+  AWARD_CREATED
+  AWARD_UPDATED
+  AWARD_STATUS_CHANGED
+  AWARD_PUBLISHED
+  AWARD_UNPUBLISHED
+  AWARD_ARCHIVED
+}
+
+model AwardHistory {
+  id        String             @id @default(cuid())
+  awardId   String
+  award     Award              @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actorRole String             // "ADMIN" | "SYSTEM"
+  action    AwardHistoryAction
+  reason    String?            @db.Text
+  metadata  Json?
+  createdAt DateTime           @default(now())
+
+  @@index([awardId])
+  @@index([createdAt])
+  @@map("award_history")
+}
+
+// -------------------------------------------------------------
+// MODULE: HỘI CHỢ Ý TƯỞNG (IDEA RECRUITMENT FAIR)
+// -------------------------------------------------------------
+
+enum IdeaRecruitmentPostStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  CLOSED
+}
+
+enum RecruitmentApplicationStatus {
+  PENDING_VERIFICATION
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model IdeaRecruitmentPost {
+  id                 String                    @id @default(cuid())
+  ideaId             String                    @unique
+  idea               Idea                      @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  title              String
+  description        String                    @db.Text
+  targetMemberCount  Int                       @default(1)
+  requiredSkills     String                    @db.Text
+  status             IdeaRecruitmentPostStatus @default(DRAFT)
+  publishedAt        DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  applications       IdeaRecruitmentApplication[]
+
+  @@index([status])
+  @@index([ideaId])
+  @@index([createdAt])
+  @@map("idea_recruitment_post")
+}
+
+model IdeaRecruitmentApplication {
+  id              String                       @id @default(cuid())
+  postId          String
+  post            IdeaRecruitmentPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  fullName        String
+  studentCode     String
+  email           String
+  emailNormalized String
+  className       String?
+  phone           String?
+  specialty       String                       @db.Text
+  motivation      String                       @db.Text
+  contribution    String                       @db.Text
+  status          RecruitmentApplicationStatus @default(PENDING_VERIFICATION)
+  reviewedAt      DateTime?
+  reviewNote      String?                      @db.Text
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+
+  verifications   IdeaRecruitmentVerification[]
+
+  @@unique([postId, studentCode])
+  @@unique([postId, emailNormalized])
+  @@index([postId])
+  @@index([status])
+  @@index([studentCode])
+  @@index([emailNormalized])
+  @@map("idea_recruitment_application")
+}
+
+model IdeaRecruitmentVerification {
+  id            String                      @id @default(cuid())
+  applicationId String
+  application   IdeaRecruitmentApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  email         String
+  otpHash       String
+  attempts      Int                         @default(0)
+  maxAttempts   Int                         @default(5)
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+
+  @@index([applicationId])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("idea_recruitment_verification")
+}
+

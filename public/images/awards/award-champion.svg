@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="55%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#7c2d12" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="45%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="48%" r="42%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgGrad)" />
+  <circle cx="400" cy="215" r="210" fill="url(#glow)" />
+  <!-- Decorative tech grid & stars -->
+  <g stroke="rgba(255,255,255,0.07)" stroke-width="1">
+    <line x1="0" y1="90" x2="800" y2="90" />
+    <line x1="0" y1="180" x2="800" y2="180" />
+    <line x1="0" y1="270" x2="800" y2="270" />
+    <line x1="0" y1="360" x2="800" y2="360" />
+    <line x1="160" y1="0" x2="160" y2="450" />
+    <line x1="320" y1="0" x2="320" y2="450" />
+    <line x1="480" y1="0" x2="480" y2="450" />
+    <line x1="640" y1="0" x2="640" y2="450" />
+  </g>
+  <!-- Laurel / Ring -->
+  <circle cx="400" cy="205" r="118" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-dasharray="8 6" opacity="0.75" />
+  <circle cx="400" cy="205" r="98" fill="rgba(255,255,255,0.04)" stroke="rgba(254,240,138,0.3)" stroke-width="1.5" />
+  <!-- Trophy Cup -->
+  <path d="M345 125 H455 V175 C455 212 430 238 400 242 C370 238 345 212 345 175 Z" fill="url(#goldGrad)" />
+  <path d="M345 140 H320 C315 140 312 145 312 152 C312 175 326 194 348 198" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round" />
+  <path d="M455 140 H480 C485 140 488 145 488 152 C488 175 474 194 452 198" fill="none" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round" />
+  <rect x="388" y="240" width="24" height="34" rx="4" fill="url(#goldGrad)" />
+  <rect x="356" y="272" width="88" height="18" rx="6" fill="url(#goldGrad)" />
+  <!-- Star on Trophy -->
+  <polygon points="400,146 406,162 423,162 409,172 414,188 400,178 386,188 391,172 377,162 394,162" fill="#fffbeb" />
+  <!-- Title -->
+  <text x="400" y="368" text-anchor="middle" fill="#fef08a" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="3">THỬ THÁCH SÁNG TẠO 4.0 UTT</text>
+  <text x="400" y="398" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600">DẤU ẤN ĐỔI MỚI SÁNG TẠO &amp; KHỞI NGHIỆP</text>
+</svg>

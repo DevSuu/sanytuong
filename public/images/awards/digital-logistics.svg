@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgLog" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="55%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgLog)" />
+  <!-- Analytics Bars & Trendline -->
+  <rect x="220" y="210" width="36" height="80" rx="6" fill="rgba(52,211,153,0.35)" />
+  <rect x="280" y="180" width="36" height="110" rx="6" fill="rgba(52,211,153,0.5)" />
+  <rect x="340" y="145" width="36" height="145" rx="6" fill="rgba(52,211,153,0.7)" />
+  <rect x="400" y="160" width="36" height="130" rx="6" fill="rgba(52,211,153,0.6)" />
+  <rect x="460" y="120" width="36" height="170" rx="6" fill="#34d399" />
+  <rect x="520" y="95" width="36" height="195" rx="6" fill="#f59e0b" />
+  <polyline points="238,195 298,165 358,130 418,145 478,105 538,80" fill="none" stroke="#fef08a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <g fill="#fef08a">
+    <circle cx="238" cy="195" r="6" />
+    <circle cx="298" cy="165" r="6" />
+    <circle cx="358" cy="130" r="6" />
+    <circle cx="418" cy="145" r="6" />
+    <circle cx="478" cy="105" r="6" />
+    <circle cx="538" cy="80" r="7" />
+  </g>
+  <text x="400" y="355" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="2">KINH TẾ SỐ &amp; LOGISTICS THÔNG MINH</text>
+  <text x="400" y="385" text-anchor="middle" fill="#a7f3d0" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600">CHUỖI CUNG ỨNG • VẬN TẢI ĐA PHƯƠNG THỨC • QUẢN TRỊ SỐ</text>
+</svg>

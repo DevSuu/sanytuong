@@ -1,0 +1,136 @@
+name: utt-innovation-production
+
+services:
+  app:
+    build:
+      context: .
+      target: app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - utt-network
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      APP_ENV: ${APP_ENV:-production}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-${APP_URL:-http://localhost:3000}}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-https://ttst.i4t.pro.vn,http://ttst.i4t.pro.vn,http://localhost:3000,http://127.0.0.1:3000}
+      BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
+      LOOKUP_TOKEN_ENCRYPTION_KEY: ${LOOKUP_TOKEN_ENCRYPTION_KEY:-}
+      EMAIL_DELIVERY_MODE: ${EMAIL_DELIVERY_MODE:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_TEST_RECIPIENT: ${EMAIL_TEST_RECIPIENT:-}
+      EMAIL_REDIRECT_ALL: ${EMAIL_REDIRECT_ALL:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    image: postgres:17.11-bookworm
+    restart: unless-stopped
+    networks:
+      - utt-network
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    build:
+      context: .
+      target: worker
+    restart: unless-stopped
+    networks:
+      - utt-network
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      APP_ENV: ${APP_ENV:-production}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-${APP_URL:-http://localhost:3000}}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      LOOKUP_TOKEN_ENCRYPTION_KEY: ${LOOKUP_TOKEN_ENCRYPTION_KEY:-}
+      EMAIL_DELIVERY_MODE: ${EMAIL_DELIVERY_MODE:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_TEST_RECIPIENT: ${EMAIL_TEST_RECIPIENT:-}
+      EMAIL_REDIRECT_ALL: ${EMAIL_REDIRECT_ALL:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cloudflared:
+    profiles:
+      - cloudflare
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    networks:
+      - utt-network
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    command: tunnel --no-autoupdate run
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  utt-network:
+    name: utt-network
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,7 @@
+# Robots.txt for UTT Innovation Portal
+User-agent: *
+Disallow: /tra-cuu/
+Disallow: /quan-tri/
+Disallow: /api/
+
+Allow: /

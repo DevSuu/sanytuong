@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgMedal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#0f3460" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="medalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgMedal)" />
+  <circle cx="680" cy="80" r="190" fill="rgba(255,255,255,0.04)" />
+  <circle cx="120" cy="380" r="160" fill="rgba(249,115,22,0.12)" />
+  <!-- Ribbon -->
+  <polygon points="365,75 395,75 415,165 380,165" fill="#ea580c" />
+  <polygon points="435,75 405,75 385,165 420,165" fill="#fb923c" />
+  <!-- Medal Body -->
+  <circle cx="400" cy="220" r="78" fill="url(#medalGrad)" stroke="#f8fafc" stroke-width="4" />
+  <circle cx="400" cy="220" r="62" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="6 4" />
+  <!-- Lightbulb / Innovation Icon inside Medal -->
+  <path d="M400 176 C380 176 366 190 366 208 C366 220 374 230 383 236 L385 248 H415 L417 236 C426 230 434 220 434 208 C434 190 420 176 400 176 Z" fill="#ea580c" />
+  <rect x="387" y="253" width="26" height="8" rx="3" fill="#334155" />
+  <text x="400" y="356" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="2">SẢNH VINH DANH GIẢI THƯỞNG UTT</text>
+  <text x="400" y="386" text-anchor="middle" fill="#fed7aa" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600">CÔNG NGHỆ – SÁNG TẠO – ỨNG DỤNG THỰC TIỄN</text>
+</svg>

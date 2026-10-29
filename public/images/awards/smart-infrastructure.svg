@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgInfra" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c4a6e" />
+      <stop offset="50%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="bridgeAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bgInfra)" />
+  <!-- Digital Network Nodes -->
+  <g stroke="rgba(56,189,248,0.22)" stroke-width="1.5">
+    <line x1="150" y1="90" x2="290" y2="60" />
+    <line x1="290" y1="60" x2="450" y2="85" />
+    <line x1="450" y1="85" x2="620" y2="65" />
+    <line x1="290" y1="60" x2="260" y2="140" />
+    <line x1="450" y1="85" x2="540" y2="140" />
+  </g>
+  <g fill="#38bdf8">
+    <circle cx="150" cy="90" r="5" />
+    <circle cx="290" cy="60" r="6" />
+    <circle cx="450" cy="85" r="6" />
+    <circle cx="620" cy="65" r="5" />
+  </g>
+  <!-- Cable-stayed Bridge Silhouette -->
+  <g stroke="rgba(255,255,255,0.35)" stroke-width="2">
+    <line x1="260" y1="130" x2="140" y2="270" />
+    <line x1="260" y1="150" x2="180" y2="270" />
+    <line x1="260" y1="170" x2="220" y2="270" />
+    <line x1="260" y1="130" x2="380" y2="270" />
+    <line x1="260" y1="150" x2="340" y2="270" />
+    <line x1="260" y1="170" x2="300" y2="270" />
+    <line x1="540" y1="130" x2="420" y2="270" />
+    <line x1="540" y1="150" x2="460" y2="270" />
+    <line x1="540" y1="170" x2="500" y2="270" />
+    <line x1="540" y1="130" x2="660" y2="270" />
+    <line x1="540" y1="150" x2="620" y2="270" />
+    <line x1="540" y1="170" x2="580" y2="270" />
+  </g>
+  <!-- Bridge Towers -->
+  <rect x="252" y="115" width="16" height="195" rx="3" fill="#f8fafc" />
+  <rect x="532" y="115" width="16" height="195" rx="3" fill="#f8fafc" />
+  <!-- Bridge Deck -->
+  <rect x="80" y="268" width="640" height="10" rx="5" fill="url(#bridgeAccent)" />
+  <text x="400" y="355" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="2">CÔNG TRÌNH &amp; HẠ TẦNG GIAO THÔNG SỐ</text>
+  <text x="400" y="385" text-anchor="middle" fill="#bae6fd" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600">BIM • VẬT LIỆU MỚI • KẾT CẤU THÔNG MINH UTT</text>
+</svg>
