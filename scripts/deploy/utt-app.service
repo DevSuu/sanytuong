@@ -1,0 +1,24 @@
+[Unit]
+Description=UTT Innovation Portal - Web App (Next.js)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=utt_innovation
+Group=utt_innovation
+WorkingDirectory=/var/www/html/sanytuong
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+ExecStart=/usr/local/bin/node scripts/start-production.mjs
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

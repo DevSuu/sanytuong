@@ -1,0 +1,22 @@
+[Unit]
+Description=UTT Innovation Portal - Email & Google Sheets Worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=utt_innovation
+Group=utt_innovation
+WorkingDirectory=/var/www/html/sanytuong
+Environment=NODE_ENV=production
+ExecStart=/var/www/html/sanytuong/node_modules/.bin/tsx src/worker/index.ts
+Restart=always
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
