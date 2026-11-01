@@ -119,7 +119,7 @@ if [[ -n "$RESTORE_FILE" ]]; then
   [[ "$HAS_TABLES" == "0" ]] || die "Database $DB_NAME đã có $HAS_TABLES bảng, không khôi phục đè. Xóa database trước nếu thật sự muốn."
   DB_URL=$(get_env DATABASE_URL)
   case "$RESTORE_FILE" in
-    *.sql)    psql -X -v ON_ERROR_STOP=0 "$DB_URL" -f "$RESTORE_FILE" >/dev/null ;;
+    *.sql)    PGCLIENTENCODING=UTF8 psql -X -v ON_ERROR_STOP=0 "$DB_URL" -f "$RESTORE_FILE" >/dev/null ;;
     *.sql.gz) gunzip -c "$RESTORE_FILE" | psql -X "$DB_URL" >/dev/null ;;
     *)        pg_restore --no-owner --no-privileges -d "$DB_URL" "$RESTORE_FILE" || true ;;
   esac

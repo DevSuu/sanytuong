@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
+    "db:migrate": "prisma migrate deploy && node scripts/fix-utf8-mojibake.mjs",
     "worker": "tsx src/worker/index.ts",
     "worker:once": "tsx src/worker/index.ts --once",
     "format": "prettier --write .",
