@@ -648,7 +648,9 @@ export function ProjectProfileLeaderPanel({
                   <div
                     style={{
                       display: "flex",
-                      gap: 20,
+                      flexWrap: "wrap",
+                      gap: 16,
+                      rowGap: 10,
                       marginBottom: 14,
                       fontSize: 13,
                       alignItems: "center",

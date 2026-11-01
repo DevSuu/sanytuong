@@ -780,8 +780,34 @@ export function SubmitIdeaView() {
                 control={control}
                 name="needsMemberSupport"
                 render={({ field }) => (
-                  <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                        cursor: "pointer",
+                        fontSize: 14,
+                        lineHeight: 1.45,
+                        padding: "12px 14px",
+                        borderRadius: 10,
+                        border:
+                          field.value === true
+                            ? "1.5px solid var(--brand-orange)"
+                            : "1px solid var(--border)",
+                        background:
+                          field.value === true
+                            ? "rgba(242, 92, 5, 0.08)"
+                            : "var(--background)",
+                        transition: "border-color 0.15s ease, background 0.15s ease",
+                      }}
+                    >
                       <input
                         id="needsMemberSupportYes"
                         type="radio"
@@ -789,11 +815,34 @@ export function SubmitIdeaView() {
                         checked={field.value === true}
                         onChange={() => field.onChange(true)}
                         disabled={isSubmitting}
+                        style={{ marginTop: 2 }}
                       />
-                      <span><strong>Có</strong>, tôi cần hỗ trợ kết nối thêm thành viên</span>
+                      <span>
+                        <strong>Có</strong>, tôi cần hỗ trợ kết nối thêm thành viên
+                      </span>
                     </label>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14 }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                        cursor: "pointer",
+                        fontSize: 14,
+                        lineHeight: 1.45,
+                        padding: "12px 14px",
+                        borderRadius: 10,
+                        border:
+                          field.value === false
+                            ? "1.5px solid var(--brand-orange)"
+                            : "1px solid var(--border)",
+                        background:
+                          field.value === false
+                            ? "rgba(242, 92, 5, 0.08)"
+                            : "var(--background)",
+                        transition: "border-color 0.15s ease, background 0.15s ease",
+                      }}
+                    >
                       <input
                         id="needsMemberSupportNo"
                         type="radio"
@@ -801,8 +850,11 @@ export function SubmitIdeaView() {
                         checked={field.value === false}
                         onChange={() => field.onChange(false)}
                         disabled={isSubmitting}
+                        style={{ marginTop: 2 }}
                       />
-                      <span><strong>Không</strong>, nhóm tôi đã có đủ thành viên</span>
+                      <span>
+                        <strong>Không</strong>, nhóm tôi đã có đủ thành viên
+                      </span>
                     </label>
                   </div>
                 )}
