@@ -3,6 +3,7 @@ import { recruitmentApplicationSubmitSchema } from "@/lib/validation/recruitment
 import { submitRecruitmentApplication } from "@/lib/domain/recruitment-service";
 import { triggerGoogleSheetsAutoSync } from "@/lib/google-sheets/sync-service";
 import { processPendingEmailJobs } from "@/lib/email/queue";
+import { checkTargetRateLimit } from "@/lib/security/rate-limiter";
 
 export async function POST(
   req: Request,
@@ -21,6 +22,22 @@ export async function POST(
           issues: parsed.error.issues,
         },
         { status: 400 },
+      );
+    }
+
+    const emailRateLimit = checkTargetRateLimit(
+      "recruitment_apply_email",
+      parsed.data.email,
+      { windowMs: 5 * 60 * 1000, max: 5 },
+    );
+    if (!emailRateLimit.allowed) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Địa chỉ email này vừa gửi quá nhiều yêu cầu liên tiếp. Vui lòng kiểm tra hộp thư hoặc thử lại sau ít phút.",
+        },
+        { status: 429 },
       );
     }
 

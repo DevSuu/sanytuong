@@ -3,7 +3,10 @@
  * Phase 6B — Security & Reliability Hardening
  *
  * Designed to mitigate brute-force and spam on sensitive endpoints
- * without requiring external infrastructure (e.g. Redis).
+ * while safely accommodating university campus Wi-Fi / lecture-hall NAT
+ * where hundreds of students share a single public IPv4 address.
+ * Individual abuse on form/email endpoints is strictly enforced per-email
+ * via checkTargetRateLimit() and per-OTP maxAttempts in PostgreSQL.
  */
 
 export interface RateLimitConfig {
@@ -25,24 +28,24 @@ interface WindowEntry {
 }
 
 export const RATE_LIMIT_RULES: Record<string, RateLimitConfig> = {
-  // Admin authentication sign-in attempts: 20 attempts per minute
-  auth: { windowMs: 60 * 1000, max: 20 },
-  // Public idea submission: 5 submissions per minute
-  idea_submit: { windowMs: 60 * 1000, max: 5 },
-  // Email verification token check: 15 checks per minute
-  email_verify: { windowMs: 60 * 1000, max: 15 },
-  // Lookup link request (triggers email): 5 requests per minute
-  lookup: { windowMs: 60 * 1000, max: 5 },
-  // Task application submission: 5 submissions per minute
-  task_apply: { windowMs: 60 * 1000, max: 5 },
-  // Task OTP verification (prevents brute-force on 6-digit OTP): 10 attempts per minute
-  otp_verify: { windowMs: 60 * 1000, max: 10 },
-  // Task OTP resend (prevents email bombardment): 3 requests per minute
-  otp_resend: { windowMs: 60 * 1000, max: 3 },
-  // Public data listing APIs (anti-scraping protection): 60 requests per minute
-  public_data: { windowMs: 60 * 1000, max: 60 },
-  // General API fallback: generous 120 requests per minute
-  general_api: { windowMs: 60 * 1000, max: 120 },
+  // Admin authentication sign-in attempts: 30 attempts per minute per IP
+  auth: { windowMs: 60 * 1000, max: 30 },
+  // Public idea submission: 120 submissions/min per shared campus NAT IP (per-email remains 5 / 5 min)
+  idea_submit: { windowMs: 60 * 1000, max: 120 },
+  // Email verification token check: 180 checks/min per shared campus NAT IP
+  email_verify: { windowMs: 60 * 1000, max: 180 },
+  // Lookup link request: 80 requests/min per shared campus NAT IP (per-email remains strictly capped)
+  lookup: { windowMs: 60 * 1000, max: 80 },
+  // Task / Recruitment application submission: 80/min per shared IP (per-email remains 5 / 5 min)
+  task_apply: { windowMs: 60 * 1000, max: 80 },
+  // Task / Recruitment OTP verification: 120/min per shared IP (each OTP locks after maxAttempts in DB)
+  otp_verify: { windowMs: 60 * 1000, max: 120 },
+  // Task / Recruitment OTP resend: 60/min per shared IP (per-application cooldown enforced in DB)
+  otp_resend: { windowMs: 60 * 1000, max: 60 },
+  // Public data listing APIs: 1200 requests/min per shared campus NAT IP
+  public_data: { windowMs: 60 * 1000, max: 1200 },
+  // General API fallback: 1500 requests/min per shared campus NAT IP
+  general_api: { windowMs: 60 * 1000, max: 1500 },
 };
 
 // In-memory token store keyed by `${category}:${ip}`
@@ -74,6 +77,18 @@ export function matchEndpointCategory(pathname: string, method: string): string 
 
   // Health check endpoints are never rate limited
   if (pathname.startsWith("/api/health")) {
+    return null;
+  }
+
+  // Public binary image endpoints (8-15 images per page view) are exempted like static assets
+  if (
+    (method === "GET" || method === "HEAD") &&
+    pathname.endsWith("/image") &&
+    (pathname.startsWith("/api/awards/") ||
+      pathname.startsWith("/api/tasks/") ||
+      pathname.startsWith("/api/highlights/") ||
+      pathname.startsWith("/api/news/"))
+  ) {
     return null;
   }
 
