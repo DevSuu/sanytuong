@@ -699,10 +699,12 @@ h1 {
 .input-icon > svg {
   position: absolute;
   left: 14px;
-  top: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
   color: var(--muted);
 }
-input:not([type="radio"]):not([type="checkbox"]),
+input:where(:not([type="radio"]):not([type="checkbox"])),
 textarea,
 select {
   width: 100%;
@@ -732,7 +734,7 @@ textarea::placeholder {
 }
 .input-icon input {
   padding-left: 42px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .form-help {
   margin-top: 6px;

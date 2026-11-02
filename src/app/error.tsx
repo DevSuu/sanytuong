@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function GlobalError({
@@ -10,9 +10,26 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const retriedOnceRef = useRef(false);
+
   useEffect(() => {
     console.error("[ApplicationError]", error);
   }, [error]);
+
+  const handleRetry = () => {
+    const msg = `${error?.name ?? ""} ${error?.message ?? ""}`;
+    if (
+      /ChunkLoadError|Loading chunk|Failed to fetch|imported module|network/i.test(
+        msg,
+      ) ||
+      retriedOnceRef.current
+    ) {
+      window.location.reload();
+      return;
+    }
+    retriedOnceRef.current = true;
+    reset();
+  };
 
   return (
     <div
@@ -85,7 +102,7 @@ export default function GlobalError({
         >
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={handleRetry}
             className="button button-primary"
             style={{
               height: 42,
