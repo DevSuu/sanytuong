@@ -407,7 +407,7 @@ export function TaskApplicationModal({
           borderRadius: "16px",
           border: "1px solid var(--border)",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-          padding: "28px",
+          padding: "clamp(16px, 4vw, 28px)",
           position: "relative",
         }}
       >
@@ -428,10 +428,10 @@ export function TaskApplicationModal({
           <X size={22} />
         </button>
 
-        <p className="eyebrow" style={{ marginBottom: 4 }}>
+        <p className="eyebrow" style={{ marginBottom: 4, paddingRight: 32 }}>
           ĐĂNG KÝ THỰC HIỆN NHIỆM VỤ
         </p>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px 0" }}>
+        <h2 style={{ fontSize: "clamp(18px, 4.5vw, 22px)", fontWeight: 700, margin: "0 0 4px 0", paddingRight: 32, overflowWrap: "anywhere" }}>
           {task.title}
         </h2>
         <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>
@@ -577,7 +577,7 @@ export function TaskApplicationModal({
                   {otpLoading ? "Đang xác thực..." : "Xác nhận & Nộp hồ sơ"}
                 </Button>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
                   <button
                     type="button"
                     onClick={() => {
@@ -622,7 +622,7 @@ export function TaskApplicationModal({
           {/* SECTION: THÔNG TIN TRƯỞNG NHÓM (STUDENT LEADER) */}
           <div
             style={{
-              padding: "18px 20px",
+              padding: "clamp(14px, 3.5vw, 18px) clamp(14px, 4vw, 20px)",
               borderRadius: "12px",
               background: "rgba(242, 92, 5, 0.04)",
               border: "1px solid rgba(242, 92, 5, 0.2)",
@@ -634,6 +634,8 @@ export function TaskApplicationModal({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 8,
                 marginBottom: 14,
               }}
             >
@@ -668,7 +670,7 @@ export function TaskApplicationModal({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
                 gap: 14,
               }}
             >
@@ -823,7 +825,7 @@ export function TaskApplicationModal({
                 </p>
               </div>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <Button
                   type="button"
                   variant="outline"
@@ -912,10 +914,12 @@ export function TaskApplicationModal({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 8,
                       marginBottom: 10,
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
                       <select
                         value={m.memberType}
                         onChange={(e) =>
@@ -933,6 +937,7 @@ export function TaskApplicationModal({
                           border: "1px solid var(--border)",
                           background: m.memberType === "ADVISOR" ? "#e0f2fe" : "#f1f5f9",
                           color: m.memberType === "ADVISOR" ? "#0369a1" : "#334155",
+                          maxWidth: "100%",
                         }}
                       >
                         <option value="STUDENT">Sinh viên</option>
@@ -962,7 +967,7 @@ export function TaskApplicationModal({
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
                       gap: 10,
                     }}
                   >
@@ -1090,6 +1095,7 @@ export function TaskApplicationModal({
             style={{
               display: "flex",
               justifyContent: "flex-end",
+              flexWrap: "wrap",
               gap: 12,
               borderTop: "1px solid var(--border)",
               paddingTop: 18,

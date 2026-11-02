@@ -897,7 +897,7 @@ export function HomeBentoNewsSection() {
                 border: "1.5px solid var(--border)",
                 borderRadius: 20,
                 boxShadow: "0 24px 60px rgba(0, 0, 0, 0.45)",
-                padding: 24,
+                padding: "clamp(16px, 4vw, 24px)",
               }}
             >
               <div
@@ -960,7 +960,7 @@ export function HomeBentoNewsSection() {
                 <div
                   style={{
                     width: "100%",
-                    height: 260,
+                    height: "clamp(180px, 45vw, 260px)",
                     borderRadius: 14,
                     overflow: "hidden",
                     marginBottom: 16,
@@ -1003,6 +1003,7 @@ export function HomeBentoNewsSection() {
                   lineHeight: 1.75,
                   color: "var(--foreground)",
                   whiteSpace: "pre-line",
+                  overflowWrap: "anywhere",
                 }}
               >
                 {modalPost.content}
@@ -1015,6 +1016,7 @@ export function HomeBentoNewsSection() {
                   borderTop: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "flex-end",
+                  flexWrap: "wrap",
                   gap: 10,
                 }}
               >

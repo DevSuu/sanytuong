@@ -164,7 +164,7 @@ export function RulesView() {
             </div>
             <h2 style={{ fontSize: "1.35rem", fontWeight: 700, margin: 0 }}>3. Lĩnh vực trọng tâm</h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginTop: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: 16, marginTop: 12 }}>
             <div style={{ padding: "16px", borderRadius: 10, background: "var(--background)", border: "1px solid var(--border)" }}>
               <strong style={{ display: "block", color: "var(--foreground)", marginBottom: 6 }}>BIM & Công nghệ Xây dựng</strong>
               <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)", lineHeight: 1.5 }}>
@@ -287,7 +287,7 @@ export function RulesView() {
             </div>
             <h2 style={{ fontSize: "1.35rem", fontWeight: 700, margin: 0 }}>5. Tiêu chí đánh giá định hướng</h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14 }}>
             <div style={{ padding: "14px 16px", borderRadius: 10, background: "var(--background)", border: "1px solid var(--border)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <CheckCircle2 size={16} style={{ color: "var(--brand-orange)" }} />

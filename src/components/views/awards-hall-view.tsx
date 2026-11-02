@@ -160,7 +160,7 @@ export function AwardsHallView() {
           <Sparkles size={14} style={{ color: "var(--brand-orange)" }} />
           TÔN VINH ĐỔI MỚI SÁNG TẠO UTT
         </p>
-        <h1 style={{ fontSize: 36, fontWeight: 800, margin: "10px 0 14px 0", lineHeight: 1.25 }}>
+        <h1 style={{ fontSize: "clamp(26px, 6vw, 36px)", fontWeight: 800, margin: "10px 0 14px 0", lineHeight: 1.25 }}>
           Sảnh giải thưởng – Dấu ấn sáng tạo
         </h1>
         <p className="page-intro" style={{ fontSize: 16, margin: 0, color: "var(--muted)" }}>
@@ -227,7 +227,7 @@ export function AwardsHallView() {
           }}
         >
           {/* SEARCH INPUT */}
-          <div style={{ position: "relative", flex: "1 1 300px" }}>
+          <div style={{ position: "relative", flex: "1 1 280px", minWidth: 0, width: "100%" }}>
             <Search
               size={18}
               style={{
@@ -258,7 +258,7 @@ export function AwardsHallView() {
 
           {/* SEASON SELECTOR DROPDOWN */}
           {seasons.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", maxWidth: "100%" }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", whiteSpace: "nowrap" }}>
                 Mùa giải:
               </span>
@@ -274,6 +274,7 @@ export function AwardsHallView() {
                   fontWeight: 600,
                   color: "var(--foreground)",
                   cursor: "pointer",
+                  maxWidth: "100%",
                 }}
               >
                 <option value="ALL">Tất cả các mùa</option>
@@ -292,6 +293,7 @@ export function AwardsHallView() {
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             gap: 16,
             flexWrap: "wrap",
             borderTop: "1px solid var(--border)",
@@ -340,7 +342,7 @@ export function AwardsHallView() {
 
           {/* PRIZES */}
           {prizes.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginLeft: "auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginRight: 2 }}>
                 GIẢI THƯỞNG:
               </span>

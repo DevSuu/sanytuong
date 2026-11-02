@@ -148,12 +148,27 @@ export function SeasonHighlightsMarquee() {
         .utt-marquee-card:hover img {
           transform: scale(1.04);
         }
+        .utt-lightbox-img {
+          max-width: min(1080px, calc(100% - 96px));
+          max-height: calc(100% - 48px);
+          object-fit: contain;
+          border-radius: 14px;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+          border: 1px solid rgba(255,255,255,0.15);
+        }
         @media (max-width: 768px) {
           .utt-marquee-card {
             width: 280px;
             height: 190px;
             margin-right: 14px;
             border-radius: 12px;
+          }
+        }
+        @media (max-width: 640px) {
+          .utt-lightbox-img {
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 110px);
+            border-radius: 10px;
           }
         }
       `}</style>
@@ -224,13 +239,14 @@ export function SeasonHighlightsMarquee() {
               aria-label="Đóng"
               style={{
                 position: "absolute",
-                top: 20,
-                right: 20,
-                width: 42,
-                height: 42,
+                top: 16,
+                right: 16,
+                zIndex: 2,
+                width: 40,
+                height: 40,
                 borderRadius: "50%",
                 border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(15, 23, 42, 0.8)",
+                background: "rgba(15, 23, 42, 0.82)",
                 color: "#fff",
                 display: "flex",
                 alignItems: "center",
@@ -248,9 +264,10 @@ export function SeasonHighlightsMarquee() {
                 aria-label="Ảnh trước"
                 style={{
                   position: "absolute",
-                  left: 20,
-                  width: 44,
-                  height: 44,
+                  left: 12,
+                  zIndex: 2,
+                  width: 40,
+                  height: 40,
                   borderRadius: "50%",
                   border: "1px solid rgba(255,255,255,0.2)",
                   background: "rgba(15, 23, 42, 0.8)",
@@ -270,14 +287,7 @@ export function SeasonHighlightsMarquee() {
               src={items[activeIndex].imageUrl.replace("w=564", "w=1280")}
               alt={items[activeIndex].title || "Dấu ấn mùa 1"}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                maxWidth: "min(1080px, calc(100% - 96px))",
-                maxHeight: "calc(100% - 48px)",
-                objectFit: "contain",
-                borderRadius: 14,
-                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.7)",
-                border: "1px solid rgba(255,255,255,0.15)",
-              }}
+              className="utt-lightbox-img"
             />
 
             {items.length > 1 && (
@@ -287,9 +297,10 @@ export function SeasonHighlightsMarquee() {
                 aria-label="Ảnh tiếp theo"
                 style={{
                   position: "absolute",
-                  right: 20,
-                  width: 44,
-                  height: 44,
+                  right: 12,
+                  zIndex: 2,
+                  width: 40,
+                  height: 40,
                   borderRadius: "50%",
                   border: "1px solid rgba(255,255,255,0.2)",
                   background: "rgba(15, 23, 42, 0.8)",

@@ -232,7 +232,7 @@ export function IdeaEditModal({
                 borderRadius: "16px",
                 border: "1px solid var(--border)",
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-                padding: "28px",
+                padding: "clamp(16px, 4vw, 28px)",
                 position: "relative",
               }}
             >
@@ -256,7 +256,7 @@ export function IdeaEditModal({
                 <X size={22} />
               </button>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", paddingRight: 32, marginBottom: 6 }}>
                 <span className="eyebrow" style={{ margin: 0 }}>
                   CHỈNH SỬA & GỬI LẠI HỒ SƠ
                 </span>
@@ -793,7 +793,7 @@ export function IdeaEditModal({
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
                             gap: 12,
                           }}
                         >
@@ -885,6 +885,7 @@ export function IdeaEditModal({
                     display: "flex",
                     justifyContent: "flex-end",
                     alignItems: "center",
+                    flexWrap: "wrap",
                     gap: 12,
                     borderTop: "1px solid var(--border)",
                     paddingTop: 18,

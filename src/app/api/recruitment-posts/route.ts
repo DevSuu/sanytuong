@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicRecruitmentPosts } from "@/lib/domain/recruitment-service";
+import { DomainValidationError } from "@/lib/domain/profile-state-machine";
 
 export async function GET(req: Request) {
   try {
@@ -33,7 +34,13 @@ export async function GET(req: Request) {
       }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Lỗi khi tải danh sách tin tuyển dụng.";
-    return NextResponse.json({ ok: false, error: message }, { status: 400 });
+    if (error instanceof DomainValidationError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
+    console.error("[GetPublicRecruitmentPostsError]", error);
+    return NextResponse.json(
+      { ok: false, error: "Không thể tải danh sách đề tài lúc này. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }

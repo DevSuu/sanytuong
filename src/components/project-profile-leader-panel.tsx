@@ -350,7 +350,7 @@ export function ProjectProfileLeaderPanel({
     <div
       style={{
         marginTop: 24,
-        padding: "24px",
+        padding: "clamp(14px, 4vw, 24px)",
         borderRadius: "12px",
         border: "1px solid var(--border)",
         background: "var(--surface)",
@@ -381,7 +381,7 @@ export function ProjectProfileLeaderPanel({
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <span
             style={{
               padding: "4px 12px",
@@ -557,6 +557,8 @@ export function ProjectProfileLeaderPanel({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: 8,
               marginBottom: 16,
             }}
           >
@@ -584,7 +586,7 @@ export function ProjectProfileLeaderPanel({
                 <div
                   key={idx}
                   style={{
-                    padding: "16px",
+                    padding: "clamp(12px, 3.5vw, 16px)",
                     borderRadius: "8px",
                     border: member.isLeader
                       ? "2px solid var(--brand-orange)"
@@ -600,10 +602,12 @@ export function ProjectProfileLeaderPanel({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 8,
                       marginBottom: 12,
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span
                         style={{
                           fontSize: 13,
@@ -704,7 +708,7 @@ export function ProjectProfileLeaderPanel({
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
                       gap: 12,
                     }}
                   >
@@ -828,6 +832,7 @@ export function ProjectProfileLeaderPanel({
             style={{
               display: "flex",
               justifyContent: "flex-end",
+              flexWrap: "wrap",
               gap: 12,
               marginTop: 24,
               borderTop: "1px solid var(--border)",
@@ -958,6 +963,8 @@ export function ProjectProfileLeaderPanel({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 6,
                       marginBottom: 6,
                     }}
                   >
@@ -1042,9 +1049,11 @@ export function ProjectProfileLeaderPanel({
               background: "var(--surface)",
               border: "1px solid var(--border)",
               borderRadius: 12,
-              padding: 24,
+              padding: "clamp(16px, 4vw, 24px)",
               maxWidth: 500,
               width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
             }}
           >
             <h4 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700 }}>
@@ -1072,7 +1081,7 @@ export function ProjectProfileLeaderPanel({
               <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
                 Chọn các trường thông tin cần chỉnh sửa *
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 8, fontSize: 13 }}>
                 {["Tên đề tài", "Lớp thành viên", "Mã sinh viên", "Số điện thoại", "Email thành viên", "Thông tin GVHD", "Danh sách thành viên"].map((field) => {
                   const checked = editRequestFields.includes(field);
                   return (
@@ -1095,7 +1104,7 @@ export function ProjectProfileLeaderPanel({
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
               <Button
                 variant="outline"
                 size="sm"

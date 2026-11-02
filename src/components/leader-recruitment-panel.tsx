@@ -287,7 +287,7 @@ export function LeaderRecruitmentPanel({
     <div
       style={{
         marginTop: 24,
-        padding: "24px",
+        padding: "clamp(14px, 4vw, 24px)",
         borderRadius: 16,
         border: "1px solid var(--border)",
         background: "var(--background)",
@@ -328,7 +328,7 @@ export function LeaderRecruitmentPanel({
         onSubmit={handleSavePost}
         style={{
           background: "var(--surface)",
-          padding: "20px",
+          padding: "clamp(14px, 3.5vw, 20px)",
           borderRadius: 12,
           border: "1px solid var(--border)",
           marginBottom: 24,
@@ -403,7 +403,7 @@ export function LeaderRecruitmentPanel({
           </Button>
 
           {post && (
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {post.status !== "PUBLISHED" && capacity.maxAllowedRecruits > 0 && (
                 <Button
                   type="button"
@@ -498,21 +498,21 @@ export function LeaderRecruitmentPanel({
                   </span>
                 </div>
 
-                <div style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 8 }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 8, overflowWrap: "anywhere" }}>
                   Email: <strong>{app.email}</strong> {app.phone ? `· SĐT: ${app.phone}` : ""} · Nộp ngày: {new Date(app.createdAt).toLocaleDateString("vi-VN")}
                 </div>
 
-                <div style={{ fontSize: "0.88rem", marginBottom: 6 }}>
+                <div style={{ fontSize: "0.88rem", marginBottom: 6, overflowWrap: "anywhere" }}>
                   <strong>Chuyên môn:</strong> {app.specialty}
                 </div>
-                <div style={{ fontSize: "0.88rem", marginBottom: 6 }}>
+                <div style={{ fontSize: "0.88rem", marginBottom: 6, overflowWrap: "anywhere" }}>
                   <strong>Lý do tham gia:</strong> {app.motivation}
                 </div>
-                <div style={{ fontSize: "0.88rem", marginBottom: 14 }}>
+                <div style={{ fontSize: "0.88rem", marginBottom: 14, overflowWrap: "anywhere" }}>
                   <strong>Đóng góp dự kiến:</strong> {app.contribution}
                 </div>
 
-                <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <Button
                     size="sm"
                     disabled={post?.status !== "PUBLISHED"}
@@ -551,7 +551,7 @@ export function LeaderRecruitmentPanel({
                   opacity: 0.85,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
                   <div>
                     <strong style={{ fontSize: 14 }}>{app.fullName}</strong> ({app.studentCode})
                   </div>
@@ -601,7 +601,7 @@ export function LeaderRecruitmentPanel({
               maxWidth: 500,
               background: "var(--surface)",
               borderRadius: 16,
-              padding: "24px",
+              padding: "clamp(16px, 4vw, 24px)",
               boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -647,7 +647,7 @@ export function LeaderRecruitmentPanel({
               />
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
               <Button variant="outline" onClick={() => setReviewingApp(null)} disabled={submittingReview}>
                 Hủy
               </Button>

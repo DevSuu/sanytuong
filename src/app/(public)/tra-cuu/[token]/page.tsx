@@ -354,7 +354,7 @@ export default async function PermanentLookupPage({
                       marginBottom: 16,
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span
                         style={{
                           display: "inline-flex",
@@ -411,7 +411,7 @@ export default async function PermanentLookupPage({
                     </div>
                   </div>
 
-                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 10px 0" }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 10px 0", overflowWrap: "anywhere" }}>
                     {idea.title}
                   </h3>
                   <p
@@ -420,6 +420,7 @@ export default async function PermanentLookupPage({
                       color: "var(--muted)",
                       lineHeight: 1.6,
                       whiteSpace: "pre-wrap",
+                      overflowWrap: "anywhere",
                       margin: 0,
                     }}
                   >
@@ -452,7 +453,7 @@ export default async function PermanentLookupPage({
                       >
                         Phản hồi từ Ban tổ chức:
                       </div>
-                      <div style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.5, overflowWrap: "anywhere" }}>
                         {feedbackToShow}
                       </div>
                     </div>

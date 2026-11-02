@@ -835,7 +835,7 @@ export function IdeaFairView() {
               <X size={22} />
             </button>
 
-            <p className="eyebrow" style={{ marginBottom: 6 }}>
+            <p className="eyebrow" style={{ marginBottom: 6, paddingRight: 32 }}>
               CHI TIẾT ĐỀ TÀI & TUYỂN DỤNG
             </p>
 
@@ -855,7 +855,7 @@ export function IdeaFairView() {
               <span className="idea-card-status-badge">ĐANG TUYỂN</span>
             </div>
 
-            <h2 style={{ fontSize: "clamp(1.2rem, 4vw, 1.45rem)", fontWeight: 800, margin: "0 0 12px 0", lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: "clamp(1.2rem, 4vw, 1.45rem)", fontWeight: 800, margin: "0 0 12px 0", lineHeight: 1.3, overflowWrap: "anywhere" }}>
               {selectedDetailPost.title}
             </h2>
 
@@ -1009,10 +1009,10 @@ export function IdeaFairView() {
             {!otpStep ? (
               /* FORM STEP */
               <div>
-                <p className="eyebrow" style={{ marginBottom: 6 }}>
+                <p className="eyebrow" style={{ marginBottom: 6, paddingRight: 32 }}>
                   HỒ SƠ ỨNG TUYỂN THÀNH VIÊN
                 </p>
-                <h2 style={{ fontSize: "clamp(1.2rem, 4vw, 1.45rem)", fontWeight: 800, margin: "0 0 6px 0" }}>
+                <h2 style={{ fontSize: "clamp(1.2rem, 4vw, 1.45rem)", fontWeight: 800, margin: "0 0 6px 0", paddingRight: 28, overflowWrap: "anywhere" }}>
                   {selectedPost.title}
                 </h2>
                 <p style={{ fontSize: "0.9rem", color: "var(--muted)", margin: "0 0 20px 0" }}>
@@ -1210,7 +1210,7 @@ export function IdeaFairView() {
                     </label>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
                     <Button type="button" variant="outline" onClick={handleCloseModal}>
                       Hủy bỏ
                     </Button>
