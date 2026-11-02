@@ -613,6 +613,9 @@ export function IdeaEditModal({
                         }}
                       >
                         <option value="">-- Chọn lĩnh vực nghiên cứu phù hợp nhất --</option>
+                        {idea.field && !(RESEARCH_FIELDS as readonly string[]).includes(idea.field) && (
+                          <option value={idea.field}>{idea.field}</option>
+                        )}
                         {RESEARCH_FIELDS.map((f) => (
                           <option key={f} value={f}>
                             {f}

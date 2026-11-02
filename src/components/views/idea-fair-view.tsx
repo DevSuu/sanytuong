@@ -32,11 +32,14 @@ import { createPortal } from "react-dom";
 const PAGE_SIZE = 8;
 
 const QUICK_CATEGORY_CHIPS = [
-  { label: "AI & Dữ liệu", value: "Trí tuệ nhân tạo", badge: "AI" },
-  { label: "Giao thông thông minh", value: "Giao thông", badge: "GIAO THÔNG" },
-  { label: "Cơ khí", value: "Cơ khí", badge: "CƠ KHÍ" },
-  { label: "Môi trường", value: "Môi trường", badge: "MÔI TRƯỜNG" },
-  { label: "Kinh tế - Quản trị", value: "Kinh tế", badge: "KINH TẾ" },
+  { label: "Đường sắt hiện đại", value: "đường sắt", badge: "ĐƯỜNG SẮT" },
+  { label: "Giao thông & BIM", value: "Giao thông", badge: "GIAO THÔNG" },
+  { label: "CNTT & AI", value: "Trí tuệ nhân tạo", badge: "AI" },
+  { label: "Tự động hóa & Robot", value: "Tự động hóa", badge: "ROBOT" },
+  { label: "Logistics", value: "Logistics", badge: "LOGISTICS" },
+  { label: "Công nghệ xanh", value: "Môi trường", badge: "XANH" },
+  { label: "Kinh tế số", value: "Kinh tế", badge: "KINH TẾ" },
+  { label: "EdTech", value: "EdTech", badge: "EDTECH" },
 ];
 
 const SIDEBAR_QUICK_SKILLS = [
@@ -70,20 +73,30 @@ function formatRelativeTime(dateString?: string | Date): string {
 
 function getFieldInfo(field?: string | null) {
   const f = field || "";
-  if (f.includes("Trí tuệ nhân tạo") || f.includes("Công nghệ") || f.includes("AI")) {
-    return { label: "AI & Dữ liệu", icon: Cpu, badge: "AI", color: "#38bdf8" };
+  const lower = f.toLowerCase();
+  if (lower.includes("đường sắt")) {
+    return { label: "Đường sắt hiện đại", icon: Car, badge: "ĐƯỜNG SẮT", color: "#fb923c" };
   }
-  if (f.includes("Giao thông") || f.includes("Xây dựng")) {
-    return { label: "Giao thông thông minh", icon: Car, badge: "GIAO THÔNG", color: "#60a5fa" };
+  if (lower.includes("giao thông") || lower.includes("hạ tầng") || lower.includes("xây dựng") || lower.includes("bim")) {
+    return { label: "Giao thông & BIM", icon: Car, badge: "GIAO THÔNG", color: "#60a5fa" };
   }
-  if (f.includes("Cơ khí") || f.includes("Cơ điện")) {
-    return { label: "Cơ khí", icon: Wrench, badge: "CƠ KHÍ", color: "#94a3b8" };
+  if (lower.includes("trí tuệ nhân tạo") || lower.includes("thông tin") || lower.includes("dữ liệu") || f.includes("AI")) {
+    return { label: "CNTT & AI", icon: Cpu, badge: "AI & CNTT", color: "#38bdf8" };
   }
-  if (f.includes("Môi trường") || f.includes("Năng lượng")) {
-    return { label: "Môi trường", icon: Leaf, badge: "MÔI TRƯỜNG", color: "#34d399" };
+  if (lower.includes("tự động hóa") || lower.includes("cơ điện") || lower.includes("cơ khí") || lower.includes("robot")) {
+    return { label: "Tự động hóa & Robot", icon: Wrench, badge: "ROBOT", color: "#94a3b8" };
   }
-  if (f.includes("Kinh tế") || f.includes("Thương mại") || f.includes("Logistics")) {
-    return { label: "Kinh tế – Quản trị", icon: Briefcase, badge: "KINH TẾ", color: "#a78bfa" };
+  if (lower.includes("logistics") || lower.includes("chuỗi cung ứng")) {
+    return { label: "Logistics", icon: Briefcase, badge: "LOGISTICS", color: "#818cf8" };
+  }
+  if (lower.includes("môi trường") || lower.includes("năng lượng") || lower.includes("công nghệ xanh")) {
+    return { label: "Công nghệ xanh", icon: Leaf, badge: "XANH", color: "#34d399" };
+  }
+  if (lower.includes("kinh tế") || lower.includes("thương mại") || lower.includes("quản trị")) {
+    return { label: "Kinh tế số", icon: Briefcase, badge: "KINH TẾ", color: "#a78bfa" };
+  }
+  if (lower.includes("giáo dục") || lower.includes("edtech") || lower.includes("đào tạo")) {
+    return { label: "EdTech", icon: Layers, badge: "EDTECH", color: "#f472b6" };
   }
   return { label: field || "Đổi mới sáng tạo", icon: Layers, badge: "SÁNG TẠO", color: "#f59e0b" };
 }

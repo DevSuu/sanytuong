@@ -3,13 +3,15 @@ import { IdeaStatus } from "@/lib/domain/idea-state-machine";
 import { createSmartEmailSchema } from "./email-validator";
 
 export const RESEARCH_FIELDS = [
-  "Công nghệ thông tin & Trí tuệ nhân tạo",
-  "Cơ khí, Cơ điện tử & Tự động hóa",
-  "Kỹ thuật Xây dựng & Giao thông",
-  "Logistics & Quản lý chuỗi cung ứng",
-  "Kinh tế số & Thương mại điện tử",
-  "Môi trường & Năng lượng tái tạo",
-  "Khác",
+  "Công nghệ đường sắt hiện đại",
+  "Công nghệ giao thông, Hạ tầng thông minh, BIM & Digital Twin",
+  "Công nghệ thông tin, Trí tuệ nhân tạo & Dữ liệu",
+  "Tự động hóa, Cơ điện tử & Kỹ thuật robot",
+  "Logistics & Chuỗi cung ứng",
+  "Công nghệ xanh, Năng lượng tái tạo & Môi trường",
+  "Kinh tế số, Thương mại điện tử & Quản trị",
+  "Công nghệ giáo dục (EdTech) & Quản lý đào tạo",
+  "Khoa học xã hội, Luật - Chính trị, Ngôn ngữ & Lĩnh vực khác",
 ] as const;
 
 export const POPULAR_BANKS = [
