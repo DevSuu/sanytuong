@@ -6,10 +6,17 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const items = await getPublicNewsPosts();
-    return NextResponse.json({
-      success: true,
-      items,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        items,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
   } catch (error: unknown) {
     console.error("[GetPublicNewsError]", error);
     return NextResponse.json(

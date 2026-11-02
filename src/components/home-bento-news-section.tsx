@@ -2,84 +2,21 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Calendar, User } from "lucide-react";
+import { X, Calendar, User, Newspaper } from "lucide-react";
 import { useAppNavigation } from "@/context/navigation-context";
 import type { NewsCategory, NewsPostItem } from "@/lib/domain/news-service";
-
-const FALLBACK_NEWS: NewsPostItem[] = [
-  {
-    id: 8101,
-    title: "Phát động Vòng Sơ khảo Mùa 2",
-    summary: "Ban Tổ chức UTT",
-    content:
-      'Chính thức phát động Vòng Sơ khảo "Thử thách Sáng tạo 4.0 UTT — Mùa 2"\n• Cấp mã hồ sơ tự động TTST-02-XX ngay khi nộp.\n• Mở tính năng ghép nhóm liên khoa tại Hội chợ ý tưởng.\n• Tiếp nhận giải pháp cho các bài toán đặt hàng từ Khoa/Viện.',
-    category: "THONG_BAO",
-    author: "Quản trị viên BTC",
-    isPinned: true,
-    status: "PUBLISHED",
-    imageUrl: "/images/traffic-ai.webp",
-    thumbLabel: "Thể lệ Mùa 2",
-    createdAt: "2026-10-28T08:00:00.000Z",
-    updatedAt: "2026-10-28T08:00:00.000Z",
-  },
-  {
-    id: 8102,
-    title: "Workshop Kỹ năng viết Đề cương",
-    summary: "Sự kiện • 26/10/2026 • Hội trường UTT",
-    content:
-      "Buổi tập huấn chuyên sâu hướng dẫn sinh viên cách trình bày mô tả bài toán, tính mới công nghệ và phương án triển khai thực tế để đạt điểm tối đa tại Vòng Sơ khảo.\n• Diễn giả: Hội đồng Cố vấn Khoa học & Công nghệ UTT.\n• Hỗ trợ giải đáp trực tiếp 1-1 cho các nhóm nghiên cứu.",
-    category: "SU_KIEN",
-    author: "Ban Cố vấn UTT",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/robot.webp",
-    thumbLabel: "Lịch Workshop",
-    createdAt: "2026-10-26T09:00:00.000Z",
-    updatedAt: "2026-10-26T09:00:00.000Z",
-  },
-  {
-    id: 8103,
-    title: "5 tiêu chí chấm chọn ý tưởng 4.0",
-    summary: "Cố vấn chuyên môn • Hội đồng GK",
-    content:
-      "Hội đồng Giám khảo công bố 5 tiêu chí trọng tâm đánh giá hồ sơ đề tài Mùa 2:\n• Tính cấp thiết và khả năng giải quyết bài toán thực tiễn.\n• Mức độ ứng dụng công nghệ số, AI, IoT hoặc Tự động hóa.\n• Tính khả thi khi ươm tạo và chuyển giao tại UTT.",
-    category: "VINH_DANH",
-    author: "Hội đồng Giám khảo",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/vr.webp",
-    thumbLabel: "Tiêu chí GK",
-    createdAt: "2026-10-25T10:00:00.000Z",
-    updatedAt: "2026-10-25T10:00:00.000Z",
-  },
-  {
-    id: 8104,
-    title: "Đặt hàng bài toán thực tế từ Doanh nghiệp",
-    summary: "Sảnh nhiệm vụ • Kèm kinh phí tài trợ",
-    content:
-      "Các Khoa, Viện và Doanh nghiệp đối tác của UTT liên tục cập nhật các bài toán đặt hàng thực tế tại Sảnh nhiệm vụ.\n• Các đội thi giải quyết bài toán đặt hàng được ưu tiên hỗ trợ kinh phí ươm tạo.\n• Kết nối cố vấn chuyên môn đồng hành xuyên suốt mùa giải.",
-    category: "THONG_BAO",
-    author: "Quản trị viên BTC",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/parking.webp",
-    thumbLabel: "Đặt hàng DN",
-    createdAt: "2026-10-24T08:30:00.000Z",
-    updatedAt: "2026-10-24T08:30:00.000Z",
-  },
-];
 
 function formatViDate(iso: string): string {
   try {
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return "28/10/2026";
+    if (isNaN(d.getTime())) return "";
     return d.toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
   } catch {
-    return "28/10/2026";
+    return "";
   }
 }
 
@@ -92,9 +29,10 @@ function getCategorySubColor(category: NewsCategory, isPinned: boolean): string 
 
 export function HomeBentoNewsSection() {
   const { goToTab } = useAppNavigation();
-  const [posts, setPosts] = useState<NewsPostItem[]>(FALLBACK_NEWS);
+  const [posts, setPosts] = useState<NewsPostItem[]>([]);
+  const [newsLoaded, setNewsLoaded] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"ALL" | NewsCategory>("ALL");
-  const [selectedPostId, setSelectedPostId] = useState<number>(FALLBACK_NEWS[0].id);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [thumbStartIdx, setThumbStartIdx] = useState(0);
   const [modalPost, setModalPost] = useState<NewsPostItem | null>(null);
   const modalCardRef = useRef<HTMLDivElement | null>(null);
@@ -109,39 +47,51 @@ export function HomeBentoNewsSection() {
     let ignore = false;
     const loadNews = async () => {
       try {
-        const res = await fetch("/api/news");
+        const res = await fetch("/api/news", { cache: "no-store" });
         const data = await res.json();
-        if (!ignore && res.ok && Array.isArray(data.items) && data.items.length > 0) {
-          setPosts(data.items);
-          setSelectedPostId((prev) =>
-            data.items.some((item: NewsPostItem) => item.id === prev)
+        if (!ignore && res.ok && Array.isArray(data.items)) {
+          const nextItems: NewsPostItem[] = data.items;
+          setPosts(nextItems);
+          setSelectedPostId((prev) => {
+            if (nextItems.length === 0) return null;
+            return prev !== null && nextItems.some((item) => item.id === prev)
               ? prev
-              : data.items[0].id
+              : nextItems[0].id;
+          });
+          setThumbStartIdx((prev) =>
+            nextItems.length > 0 ? prev % nextItems.length : 0
+          );
+          setModalPost((prev) =>
+            prev && nextItems.some((item) => item.id === prev.id) ? prev : null
           );
         }
       } catch {
-        // Keep initial fallback posts if offline
+        // Ignore transient network errors
+      } finally {
+        if (!ignore) setNewsLoaded(true);
       }
     };
     loadNews();
     window.addEventListener("focus", loadNews);
+    window.addEventListener("utt:auto-refresh", loadNews);
     return () => {
       ignore = true;
       window.removeEventListener("focus", loadNews);
+      window.removeEventListener("utt:auto-refresh", loadNews);
     };
   }, []);
 
   const filteredPosts = useMemo(() => {
     if (activeCategory === "ALL") return posts;
-    const matched = posts.filter((p) => p.category === activeCategory);
-    return matched.length > 0 ? matched : posts;
+    return posts.filter((p) => p.category === activeCategory);
   }, [posts, activeCategory]);
 
-  const activePost = useMemo(() => {
+  const activePost = useMemo<NewsPostItem | null>(() => {
+    if (filteredPosts.length === 0) return null;
     return (
-      filteredPosts.find((p) => p.id === selectedPostId) ||
-      filteredPosts[0] ||
-      FALLBACK_NEWS[0]
+      filteredPosts.find((p) => p.id === selectedPostId) ??
+      filteredPosts[0] ??
+      null
     );
   }, [filteredPosts, selectedPostId]);
 
@@ -150,25 +100,37 @@ export function HomeBentoNewsSection() {
   }, [filteredPosts]);
 
   const visibleThumbs = useMemo(() => {
-    const source = posts.length > 0 ? posts : FALLBACK_NEWS;
+    if (filteredPosts.length === 0) return [];
+    const count = Math.min(4, filteredPosts.length);
     const result: NewsPostItem[] = [];
-    for (let i = 0; i < Math.min(4, source.length); i++) {
-      result.push(source[(thumbStartIdx + i) % source.length]);
+    for (let i = 0; i < count; i++) {
+      result.push(filteredPosts[(thumbStartIdx + i) % filteredPosts.length]);
     }
     return result;
-  }, [posts, thumbStartIdx]);
+  }, [filteredPosts, thumbStartIdx]);
+
+  const handleSelectCategory = (cat: "ALL" | NewsCategory) => {
+    setActiveCategory(cat);
+    setThumbStartIdx(0);
+    const list = cat === "ALL" ? posts : posts.filter((p) => p.category === cat);
+    setSelectedPostId(list[0]?.id ?? null);
+  };
 
   const handleCycleThumb = (delta: number) => {
-    const len = posts.length || 1;
+    const len = filteredPosts.length;
+    if (len === 0) return;
     const nextIdx = (thumbStartIdx + delta + len) % len;
     setThumbStartIdx(nextIdx);
-    const target = posts[nextIdx];
+    const target = filteredPosts[nextIdx];
     if (target) {
       setSelectedPostId(target.id);
     }
   };
 
-  const contentLines = (() => {
+  const contentLines = useMemo(() => {
+    if (!activePost) {
+      return { headline: "", body: "" };
+    }
     const lines = (activePost.content || "")
       .split("\n")
       .map((l) => l.trim())
@@ -183,7 +145,7 @@ export function HomeBentoNewsSection() {
       headline: activePost.title,
       body: activePost.content,
     };
-  })();
+  }, [activePost]);
 
   return (
     <section
@@ -548,7 +510,7 @@ export function HomeBentoNewsSection() {
 
         {/* RIGHT SIDE: BẢNG TIN & HOẠT ĐỘNG SÁNG TẠO */}
         <div className="news-hub-card">
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
             <div
               style={{
                 display: "flex",
@@ -566,21 +528,14 @@ export function HomeBentoNewsSection() {
             <div className="news-hub-tabs">
               <button
                 type="button"
-                onClick={() => {
-                  setActiveCategory("ALL");
-                  if (posts[0]) setSelectedPostId(posts[0].id);
-                }}
+                onClick={() => handleSelectCategory("ALL")}
                 className={`news-hub-tab tab-all ${activeCategory === "ALL" ? "active" : ""}`}
               >
                 Tất Cả Bản Tin
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveCategory("THONG_BAO");
-                  const first = posts.find((p) => p.category === "THONG_BAO");
-                  if (first) setSelectedPostId(first.id);
-                }}
+                onClick={() => handleSelectCategory("THONG_BAO")}
                 className={`news-hub-tab tab-thong-bao ${
                   activeCategory === "THONG_BAO" ? "active" : ""
                 }`}
@@ -589,11 +544,7 @@ export function HomeBentoNewsSection() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveCategory("SU_KIEN");
-                  const first = posts.find((p) => p.category === "SU_KIEN");
-                  if (first) setSelectedPostId(first.id);
-                }}
+                onClick={() => handleSelectCategory("SU_KIEN")}
                 className={`news-hub-tab tab-su-kien ${
                   activeCategory === "SU_KIEN" ? "active" : ""
                 }`}
@@ -602,11 +553,7 @@ export function HomeBentoNewsSection() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveCategory("VINH_DANH");
-                  const first = posts.find((p) => p.category === "VINH_DANH");
-                  if (first) setSelectedPostId(first.id);
-                }}
+                onClick={() => handleSelectCategory("VINH_DANH")}
                 className={`news-hub-tab tab-vinh-danh ${
                   activeCategory === "VINH_DANH" ? "active" : ""
                 }`}
@@ -615,221 +562,307 @@ export function HomeBentoNewsSection() {
               </button>
             </div>
 
-            {/* Split: Left Top 3 News List + Right Direct Article Reader */}
-            <div className="news-hub-split">
-              {/* Left: Top 3 Featured / Pinned News */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {topThreePosts.map((post, idx) => {
-                  const isSelected = post.id === activePost.id;
-                  const subColor = getCategorySubColor(post.category, post.isPinned || idx === 0);
+            {!newsLoaded ? (
+              <div
+                className="news-reader-panel"
+                style={{
+                  flex: 1,
+                  minHeight: 240,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: "28px 20px",
+                }}
+              >
+                <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+                  Đang tải bản tin &amp; hoạt động sáng tạo...
+                </span>
+              </div>
+            ) : !activePost ? (
+              <div
+                className="news-reader-panel"
+                style={{
+                  flex: 1,
+                  minHeight: 240,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  gap: 10,
+                  padding: "28px 20px",
+                }}
+              >
+                <div
+                  style={{
+                    width: 46,
+                    height: 46,
+                    borderRadius: 14,
+                    background: "rgba(242, 92, 5, 0.12)",
+                    color: "var(--brand-orange)",
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Newspaper size={22} />
+                </div>
+                <div
+                  className="news-reader-heading"
+                  style={{ marginBottom: 0, fontSize: 15 }}
+                >
+                  {posts.length === 0
+                    ? "Hiện chưa có bản tin hoặc hoạt động mới"
+                    : "Chưa có bản tin trong chuyên mục này"}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: "var(--muted)",
+                    maxWidth: 380,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {posts.length === 0
+                    ? "Các thông báo chính thức, lịch sự kiện đồng hành và thông tin vinh danh từ Ban Tổ chức sẽ được cập nhật tại đây."
+                    : "Hiện chưa có bài đăng nào thuộc chuyên mục đang chọn."}
+                </div>
+                {posts.length > 0 && activeCategory !== "ALL" && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectCategory("ALL")}
+                    style={{
+                      marginTop: 4,
+                      background: "none",
+                      border: "1px solid var(--border)",
+                      borderRadius: 9,
+                      padding: "6px 14px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "var(--brand-orange)",
+                    }}
+                  >
+                    Xem tất cả bản tin
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* Split: Left Top 3 News List + Right Direct Article Reader */
+              <div className="news-hub-split">
+                {/* Left: Top 3 Featured / Pinned News */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {topThreePosts.map((post, idx) => {
+                    const isSelected = post.id === activePost.id;
+                    const subColor = getCategorySubColor(post.category, post.isPinned || idx === 0);
+                    return (
+                      <button
+                        type="button"
+                        key={post.id}
+                        onClick={() => setSelectedPostId(post.id)}
+                        className={`news-item-btn ${isSelected ? "selected" : ""}`}
+                      >
+                        {post.isPinned || idx === 0 ? (
+                          <span
+                            style={{
+                              fontSize: 18,
+                              width: 26,
+                              textAlign: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            👑
+                          </span>
+                        ) : (
+                          <span
+                            className={`news-rank-badge ${
+                              idx === 1 ? "rank-2" : "rank-3"
+                            }`}
+                          >
+                            {idx + 1}.
+                          </span>
+                        )}
+
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.imageUrl || "/images/traffic-ai.webp"}
+                          alt={post.title}
+                          style={{
+                            width: 46,
+                            height: 46,
+                            borderRadius: 10,
+                            objectFit: "cover",
+                            flexShrink: 0,
+                          }}
+                        />
+
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div className="news-item-title">{post.title}</div>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: subColor,
+                              fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              marginTop: 2,
+                            }}
+                          >
+                            {post.isPinned ? `📌 Tin ghim • ${post.summary}` : post.summary}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right: Direct Article Reader */}
+                <div className="news-reader-panel">
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: "var(--brand-orange)",
+                        }}
+                      >
+                        📖 Nội Dung Bản Tin Đang Xem
+                      </span>
+                      <span style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 600 }}>
+                        {formatViDate(activePost.createdAt)}
+                      </span>
+                    </div>
+
+                    <div className="news-reader-heading">{contentLines.headline}</div>
+                    <div className="news-reader-body">{contentLines.body}</div>
+                  </div>
+
+                  <div className="news-reader-footer">
+                    <span style={{ color: "var(--muted)", fontWeight: 600 }}>
+                      Đăng bởi: {activePost.author || "Quản trị viên BTC"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setModalPost(activePost)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        color: "var(--brand-orange)",
+                        fontWeight: 800,
+                        fontSize: 11.5,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Xem chi tiết / Phóng to &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Thumbnail Carousel Strip */}
+          {newsLoaded && activePost && visibleThumbs.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 14,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => handleCycleThumb(-1)}
+                aria-label="Bản tin trước"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted)",
+                  fontSize: 22,
+                  fontWeight: 900,
+                  padding: "0 4px",
+                  lineHeight: 1,
+                }}
+              >
+                &lsaquo;
+              </button>
+
+              <div className="news-thumb-grid">
+                {visibleThumbs.map((thumb) => {
+                  const isActive = thumb.id === activePost.id;
                   return (
                     <button
                       type="button"
-                      key={post.id}
-                      onClick={() => setSelectedPostId(post.id)}
-                      className={`news-item-btn ${isSelected ? "selected" : ""}`}
+                      key={thumb.id}
+                      onClick={() => setSelectedPostId(thumb.id)}
+                      className={`news-thumb-card ${isActive ? "active" : ""}`}
                     >
-                      {post.isPinned || idx === 0 ? (
-                        <span
-                          style={{
-                            fontSize: 18,
-                            width: 26,
-                            textAlign: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          👑
-                        </span>
-                      ) : (
-                        <span
-                          className={`news-rank-badge ${
-                            idx === 1 ? "rank-2" : "rank-3"
-                          }`}
-                        >
-                          {idx + 1}.
-                        </span>
-                      )}
-
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={post.imageUrl || "/images/traffic-ai.webp"}
-                        alt={post.title}
+                        src={thumb.imageUrl || "/images/traffic-ai.webp"}
+                        alt={thumb.title}
                         style={{
-                          width: 46,
-                          height: 46,
-                          borderRadius: 10,
+                          width: "100%",
+                          height: "100%",
                           objectFit: "cover",
-                          flexShrink: 0,
                         }}
                       />
-
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div className="news-item-title">{post.title}</div>
-                        <div
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(180deg, transparent 20%, rgba(0,0,0,0.85) 100%)",
+                          display: "flex",
+                          alignItems: "flex-end",
+                          padding: "5px 7px",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: "#ffffff",
+                          textAlign: "left",
+                        }}
+                      >
+                        <span
                           style={{
-                            fontSize: 11,
-                            color: subColor,
-                            fontWeight: 700,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            marginTop: 2,
                           }}
                         >
-                          {post.isPinned ? `📌 Tin ghim • ${post.summary}` : post.summary}
-                        </div>
+                          {thumb.thumbLabel || thumb.title}
+                        </span>
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Right: Direct Article Reader */}
-              <div className="news-reader-panel">
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: "var(--brand-orange)",
-                      }}
-                    >
-                      📖 Nội Dung Bản Tin Đang Xem
-                    </span>
-                    <span style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 600 }}>
-                      {formatViDate(activePost.createdAt)}
-                    </span>
-                  </div>
-
-                  <div className="news-reader-heading">{contentLines.headline}</div>
-                  <div className="news-reader-body">{contentLines.body}</div>
-                </div>
-
-                <div className="news-reader-footer">
-                  <span style={{ color: "var(--muted)", fontWeight: 600 }}>
-                    Đăng bởi: {activePost.author || "Quản trị viên BTC"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setModalPost(activePost)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      color: "var(--brand-orange)",
-                      fontWeight: 800,
-                      fontSize: 11.5,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Xem chi tiết / Phóng to &rarr;
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleCycleThumb(1)}
+                aria-label="Bản tin tiếp theo"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted)",
+                  fontSize: 22,
+                  fontWeight: 900,
+                  padding: "0 4px",
+                  lineHeight: 1,
+                }}
+              >
+                &rsaquo;
+              </button>
             </div>
-          </div>
-
-          {/* Bottom Thumbnail Carousel Strip */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginTop: 14,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => handleCycleThumb(-1)}
-              aria-label="Bản tin trước"
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--muted)",
-                fontSize: 22,
-                fontWeight: 900,
-                padding: "0 4px",
-                lineHeight: 1,
-              }}
-            >
-              &lsaquo;
-            </button>
-
-            <div className="news-thumb-grid">
-              {visibleThumbs.map((thumb) => {
-                const isActive = thumb.id === activePost.id;
-                return (
-                  <button
-                    type="button"
-                    key={thumb.id}
-                    onClick={() => setSelectedPostId(thumb.id)}
-                    className={`news-thumb-card ${isActive ? "active" : ""}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={thumb.imageUrl || "/images/traffic-ai.webp"}
-                      alt={thumb.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background:
-                          "linear-gradient(180deg, transparent 20%, rgba(0,0,0,0.85) 100%)",
-                        display: "flex",
-                        alignItems: "flex-end",
-                        padding: "5px 7px",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: "#ffffff",
-                        textAlign: "left",
-                      }}
-                    >
-                      <span
-                        style={{
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {thumb.thumbLabel || thumb.title}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleCycleThumb(1)}
-              aria-label="Bản tin tiếp theo"
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--muted)",
-                fontSize: 22,
-                fontWeight: 900,
-                padding: "0 4px",
-                lineHeight: 1,
-              }}
-            >
-              &rsaquo;
-            </button>
-          </div>
+          )}
         </div>
       </div>
 

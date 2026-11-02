@@ -44,69 +44,6 @@ export interface NewsPostItem {
   updatedAt: string;
 }
 
-const DEFAULT_INITIAL_NEWS: NewsPostItem[] = [
-  {
-    id: 8101,
-    title: "Phát động Vòng Sơ khảo Mùa 2",
-    summary: "Ban Tổ chức UTT",
-    content:
-      'Chính thức phát động Vòng Sơ khảo "Thử thách Sáng tạo 4.0 UTT — Mùa 2"\n• Cấp mã hồ sơ tự động TTST-02-XX ngay khi nộp.\n• Mở tính năng ghép nhóm liên khoa tại Hội chợ ý tưởng.\n• Tiếp nhận giải pháp cho các bài toán đặt hàng từ Khoa/Viện.',
-    category: "THONG_BAO",
-    author: "Quản trị viên BTC",
-    isPinned: true,
-    status: "PUBLISHED",
-    imageUrl: "/images/traffic-ai.webp",
-    thumbLabel: "Thể lệ Mùa 2",
-    createdAt: "2026-10-28T08:00:00.000Z",
-    updatedAt: "2026-10-28T08:00:00.000Z",
-  },
-  {
-    id: 8102,
-    title: "Workshop Kỹ năng viết Đề cương",
-    summary: "Sự kiện • 26/10/2026 • Hội trường UTT",
-    content:
-      "Buổi tập huấn chuyên sâu hướng dẫn sinh viên cách trình bày mô tả bài toán, tính mới công nghệ và phương án triển khai thực tế để đạt điểm tối đa tại Vòng Sơ khảo.\n• Diễn giả: Hội đồng Cố vấn Khoa học & Công nghệ UTT.\n• Hỗ trợ giải đáp trực tiếp 1-1 cho các nhóm nghiên cứu.",
-    category: "SU_KIEN",
-    author: "Ban Cố vấn UTT",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/robot.webp",
-    thumbLabel: "Lịch Workshop",
-    createdAt: "2026-10-26T09:00:00.000Z",
-    updatedAt: "2026-10-26T09:00:00.000Z",
-  },
-  {
-    id: 8103,
-    title: "5 tiêu chí chấm chọn ý tưởng 4.0",
-    summary: "Cố vấn chuyên môn • Hội đồng GK",
-    content:
-      "Hội đồng Giám khảo công bố 5 tiêu chí trọng tâm đánh giá hồ sơ đề tài Mùa 2:\n• Tính cấp thiết và khả năng giải quyết bài toán thực tiễn.\n• Mức độ ứng dụng công nghệ số, AI, IoT hoặc Tự động hóa.\n• Tính khả thi khi ươm tạo và chuyển giao tại UTT.",
-    category: "VINH_DANH",
-    author: "Hội đồng Giám khảo",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/vr.webp",
-    thumbLabel: "Tiêu chí GK",
-    createdAt: "2026-10-25T10:00:00.000Z",
-    updatedAt: "2026-10-25T10:00:00.000Z",
-  },
-  {
-    id: 8104,
-    title: "Đặt hàng bài toán thực tế từ Doanh nghiệp",
-    summary: "Sảnh nhiệm vụ • Kèm kinh phí tài trợ",
-    content:
-      "Các Khoa, Viện và Doanh nghiệp đối tác của UTT liên tục cập nhật các bài toán đặt hàng thực tế tại Sảnh nhiệm vụ.\n• Các đội thi giải quyết bài toán đặt hàng được ưu tiên hỗ trợ kinh phí ươm tạo.\n• Kết nối cố vấn chuyên môn đồng hành xuyên suốt mùa giải.",
-    category: "THONG_BAO",
-    author: "Quản trị viên BTC",
-    isPinned: false,
-    status: "PUBLISHED",
-    imageUrl: "/images/parking.webp",
-    thumbLabel: "Đặt hàng DN",
-    createdAt: "2026-10-24T08:30:00.000Z",
-    updatedAt: "2026-10-24T08:30:00.000Z",
-  },
-];
-
 function sortNewsPosts(items: NewsPostItem[]): NewsPostItem[] {
   return [...items].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -132,16 +69,15 @@ export async function getAdminNewsPosts(): Promise<NewsPostItem[]> {
       where: { id: NEWS_INDEX_PROBE_ID },
     });
     if (!row?.label) {
-      await saveNewsIndex(DEFAULT_INITIAL_NEWS);
-      return sortNewsPosts(DEFAULT_INITIAL_NEWS);
+      return [];
     }
     const parsed = JSON.parse(row.label);
     if (!Array.isArray(parsed)) {
-      return sortNewsPosts(DEFAULT_INITIAL_NEWS);
+      return [];
     }
     return sortNewsPosts(parsed as NewsPostItem[]);
   } catch {
-    return sortNewsPosts(DEFAULT_INITIAL_NEWS);
+    return [];
   }
 }
 
