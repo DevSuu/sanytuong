@@ -37,9 +37,7 @@ export const recruitmentApplicationSubmitSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .min(5, "Mã sinh viên phải từ 5 ký tự trở lên.")
-    .max(20, "Mã sinh viên không vượt quá 20 ký tự.")
-    .regex(/^[a-zA-Z0-9]+$/, "Mã sinh viên chỉ chứa chữ và số."),
+    .min(1, "Vui lòng nhập mã cán bộ / mã sinh viên."),
   email: createSmartEmailSchema("Email không đúng định dạng.").transform((v) =>
     v.toLowerCase()
   ),

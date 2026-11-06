@@ -129,8 +129,7 @@ export const ideaSubmissionSchema = z
     studentCode: z
       .string()
       .trim()
-      .min(2, "Mã cán bộ / mã sinh viên phải có ít nhất 2 ký tự")
-      .max(30, "Mã cán bộ / mã sinh viên không được vượt quá 30 ký tự"),
+      .min(1, "Vui lòng nhập mã cán bộ / mã sinh viên"),
     className: z
       .string()
       .trim()
@@ -286,8 +285,7 @@ export const ideaResubmissionSchema = z
     studentCode: z
       .string()
       .trim()
-      .min(2, "Mã cán bộ / mã sinh viên phải có ít nhất 2 ký tự")
-      .max(30, "Mã cán bộ / mã sinh viên không được vượt quá 30 ký tự"),
+      .min(1, "Vui lòng nhập mã cán bộ / mã sinh viên"),
     className: z
       .string()
       .trim()

@@ -406,7 +406,7 @@ export function SubmitIdeaView() {
                   id="studentCode"
                   type="text"
                   autoComplete="off"
-                  placeholder="Ví dụ: 72DCHT21001 hoặc CB12345"
+                  placeholder="Ví dụ: 72DCHT21001 hoặc mã cán bộ"
                   disabled={isSubmitting}
                   {...register("studentCode")}
                 />

@@ -16,7 +16,6 @@ export const memberItemSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .max(30, "Mã sinh viên không hợp lệ.")
     .nullable()
     .optional(),
   className: z
@@ -87,7 +86,7 @@ export const taskApplicationSubmitSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .min(3, "Mã sinh viên phải có ít nhất 3 ký tự."),
+    .min(1, "Vui lòng nhập mã cán bộ / mã sinh viên."),
   className: z
     .string()
     .trim()
@@ -111,7 +110,7 @@ export const taskApplicationDraftSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .min(3, "Mã sinh viên phải có ít nhất 3 ký tự."),
+    .min(1, "Vui lòng nhập mã cán bộ / mã sinh viên."),
   className: z
     .string()
     .trim()

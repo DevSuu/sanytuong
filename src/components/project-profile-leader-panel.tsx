@@ -106,7 +106,7 @@ export function ProjectProfileLeaderPanel({
     className: "",
     email: "",
     phone: "",
-    department: "Khoa Công nghệ thông tin",
+    department: "",
   };
 
   const defaultMembers: LeaderPanelMember[] = [
@@ -798,7 +798,7 @@ export function ProjectProfileLeaderPanel({
                             type="text"
                             value={member.department || ""}
                             onChange={(e) => updateMember(idx, "department", e.target.value)}
-                            placeholder="Khoa Công nghệ thông tin"
+                            placeholder="VD: Khoa Công nghệ thông tin"
                             className="form-input"
                             style={{ width: "100%", height: 36, fontSize: 13, padding: "0 10px" }}
                           />

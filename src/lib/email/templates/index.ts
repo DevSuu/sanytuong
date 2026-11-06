@@ -161,17 +161,18 @@ Email hỗ trợ: i4t@utt.edu.vn`;
       const title = String(payload.title || "Ý tưởng dự thi");
       const lookupUrl = payload.lookupUrl ? String(payload.lookupUrl) : null;
 
-      const subject = `[UTT - Sáng tạo 4.0] Chúc mừng! Ý tưởng "${refCode}" đã được phê duyệt`;
+      const subject = `[UTT - Sáng tạo 4.0] Chúc mừng! Ý tưởng "${refCode}" đã được duyệt — Vui lòng hoàn thiện hồ sơ`;
 
       const text = `Kính gửi ${submitterName},
 
-Ban tổ chức Cuộc thi "Thử thách sáng tạo 4.0" trân trọng thông báo:
-Ý tưởng của bạn "${title}" (Mã hồ sơ: ${refCode}) ĐÃ ĐƯỢC PHÊ DUYỆT!
+Ban tổ chức Cuộc thi "Thử thách Sáng tạo 4.0" trân trọng thông báo:
+Ý tưởng của bạn "${title}" (Mã hồ sơ: ${refCode}) ĐÃ ĐƯỢC PHÊ DUYỆT vượt qua Vòng 1!
 
-Hồ sơ của bạn đã vượt qua vòng sơ loại và đủ điều kiện bước tiếp vào các vòng đánh giá chuyên sâu / ghép đội giải quyết nhiệm vụ thực tế.
-
-Ban tổ chức sẽ liên hệ và gửi hướng dẫn chi tiết các bước tiếp theo trong thời gian sớm nhất.
-${lookupUrl ? `\nBạn có thể theo dõi tiến độ và thông tin hồ sơ tại:\n${lookupUrl}\n` : ""}
+YÊU CẦU QUAN TRỌNG — HOÀN THIỆN HỒ SƠ VÒNG 2:
+Để xác nhận tham gia Vòng 2, bạn vui lòng truy cập đường dẫn bên dưới để:
+1. Kê khai đầy đủ danh sách Thành viên tham gia và Giảng viên hướng dẫn, sau đó bấm "Gửi hồ sơ cho Ban tổ chức".
+2. (Tùy chọn) Nếu nhóm chưa đủ người, bạn có thể đăng tin tuyển thêm đồng đội lên Hội chợ ý tưởng ngay trong trang quản lý hồ sơ.
+${lookupUrl ? `\nHoàn thiện hồ sơ ngay tại:\n${lookupUrl}\n` : ""}
 Trân trọng,
 Ban tổ chức Cuộc thi Sáng tạo 4.0 UTT
 Email hỗ trợ: i4t@utt.edu.vn`;
@@ -181,7 +182,7 @@ Email hỗ trợ: i4t@utt.edu.vn`;
         `
         <div class="greeting">Kính gửi ${submitterName},</div>
         <p style="color: #16a34a; font-weight: 600; font-size: 17px;">🎉 CHÚC MỪNG BẠN VÀ NHÓM TÁC GIẢ!</p>
-        <p>Ban tổ chức cuộc thi <strong>"Thử thách sáng tạo 4.0"</strong> trân trọng thông báo ý tưởng của bạn đã được Hội đồng chuyên môn <strong>PHÊ DUYỆT</strong>.</p>
+        <p>Ban tổ chức cuộc thi <strong>"Thử thách Sáng tạo 4.0"</strong> trân trọng thông báo ý tưởng của bạn đã được Hội đồng chuyên môn <strong>PHÊ DUYỆT</strong> vượt qua Vòng 1.</p>
         
         <div class="info-box" style="border-left: 4px solid #16a34a;">
           <div class="info-label">Mã hồ sơ được phê duyệt</div>
@@ -189,17 +190,28 @@ Email hỗ trợ: i4t@utt.edu.vn`;
           <p style="margin: 8px 0 0; font-size: 14px; color: #334155;"><strong>Tên ý tưởng:</strong> ${title}</p>
         </div>
 
-        <p>Hồ sơ của bạn đã đủ điều kiện tiến vào các vòng cố vấn chuyên sâu và tham gia giải quyết các bài toán thực tiễn của doanh nghiệp.</p>
-        <p>Ban tổ chức sẽ tiếp tục gửi thông báo về lịch trình và hướng dẫn chi tiết qua email này.</p>
+        <div class="info-box" style="background: #fff7ed; border: 1px solid #fed7aa; border-left: 4px solid #ea580c;">
+          <div style="font-size: 13px; font-weight: 700; color: #c2410c; text-transform: uppercase; margin-bottom: 8px;">
+            📌 Yêu cầu quan trọng: Hoàn thiện hồ sơ Vòng 2
+          </div>
+          <p style="margin: 0 0 8px; font-size: 14px; color: #334155;">
+            Để chính thức xác nhận tham gia <strong>Vòng 2</strong>, bạn vui lòng bấm vào nút <strong>"Hoàn thiện hồ sơ"</strong> bên dưới để thực hiện:
+          </p>
+          <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #334155; line-height: 1.65;">
+            <li>Kê khai đầy đủ danh sách <strong>Thành viên tham gia &amp; Giảng viên hướng dẫn</strong>, sau đó nhấn <strong>"Gửi hồ sơ cho Ban tổ chức"</strong>.</li>
+            <li><em>(Tùy chọn)</em> Nếu nhóm chưa đủ thành viên, bạn có thể đăng tin tìm thêm đồng đội trên <strong>Hội chợ ý tưởng</strong> ngay tại trang này.</li>
+          </ol>
+        </div>
         ${
           lookupUrl
             ? `
         <div class="btn-container">
-          <a href="${lookupUrl}" class="btn" target="_blank">Tra cứu tiến độ hồ sơ</a>
+          <a href="${lookupUrl}" class="btn" target="_blank">Hoàn thiện hồ sơ</a>
         </div>
         `
             : ""
         }
+        <p style="font-size: 13px; color: #64748b; text-align: center;"><em>* Vui lòng lưu giữ email này để truy cập và quản lý hồ sơ đề tài của nhóm trong suốt cuộc thi.</em></p>
       `,
       );
 
@@ -281,8 +293,10 @@ Hội đồng chuyên môn đã xem xét ý tưởng "${title}" (Mã hồ sơ: $
 Nội dung yêu cầu chỉnh sửa / bổ sung:
 ${reason}
 
-Vui lòng chuẩn bị các thông tin trên và liên hệ với Ban tổ chức qua email i4t@utt.edu.vn hoặc theo hướng dẫn để cập nhật hồ sơ.
-${lookupUrl ? `\nBạn có thể xem lại chi tiết hồ sơ hiện tại tại:\n${lookupUrl}\n` : ""}
+Vui lòng truy cập trang quản lý hồ sơ theo đường dẫn bên dưới, nhấn nút "Chỉnh sửa & Gửi lại" để cập nhật trực tiếp nội dung và nộp lại cho Ban tổ chức xét duyệt:
+${lookupUrl ? `\n${lookupUrl}\n` : ""}
+Nếu cần giải đáp thêm, bạn có thể liên hệ Ban tổ chức qua email i4t@utt.edu.vn.
+
 Trân trọng,
 Ban tổ chức Cuộc thi Sáng tạo 4.0 UTT
 Email hỗ trợ: i4t@utt.edu.vn`;
@@ -306,16 +320,17 @@ Email hỗ trợ: i4t@utt.edu.vn`;
           ${reason}
         </div>
 
-        <p>Vui lòng gửi phản hồi hoặc liên hệ lại với Ban tổ chức qua hòm thư <a href="mailto:i4t@utt.edu.vn">i4t@utt.edu.vn</a> để được hướng dẫn cập nhật hồ sơ.</p>
+        <p>Vui lòng nhấn vào nút bên dưới để truy cập trang quản lý hồ sơ, bấm nút <strong>"Chỉnh sửa &amp; Gửi lại"</strong> để cập nhật trực tiếp nội dung theo góp ý và gửi lại cho Ban tổ chức xét duyệt:</p>
         ${
           lookupUrl
             ? `
         <div class="btn-container">
-          <a href="${lookupUrl}" class="btn" target="_blank">Xem chi tiết hồ sơ</a>
+          <a href="${lookupUrl}" class="btn" target="_blank">Chỉnh sửa &amp; Gửi lại hồ sơ</a>
         </div>
         `
             : ""
         }
+        <p style="font-size: 13px; color: #64748b;"><em>* Nếu có thắc mắc cần hỗ trợ thêm, vui lòng liên hệ Ban tổ chức qua hòm thư <a href="mailto:i4t@utt.edu.vn">i4t@utt.edu.vn</a>.</em></p>
       `,
       );
 

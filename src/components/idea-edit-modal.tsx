@@ -408,7 +408,7 @@ export function IdeaEditModal({
                       <input
                         id="edit-studentCode"
                         type="text"
-                        placeholder="Ví dụ: 72DCHT21001"
+                        placeholder="Ví dụ: 72DCHT21001 hoặc mã cán bộ"
                         disabled={isSubmitting}
                         {...register("studentCode")}
                       />

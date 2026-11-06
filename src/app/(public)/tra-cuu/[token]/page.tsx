@@ -5,7 +5,7 @@ import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_BADGES,
 } from "@/lib/domain/task-state-machine";
-import { AlertCircle, Clock, Calendar, Hash, FileText, Briefcase, Building2, Users } from "lucide-react";
+import { AlertCircle, AlertTriangle, Clock, Calendar, Hash, FileText, Briefcase, Building2, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProjectProfileLeaderPanel } from "@/components/project-profile-leader-panel";
@@ -131,6 +131,14 @@ export default async function PermanentLookupPage({
   }
 
   const { ideas, taskApplications } = submitter;
+  const ideasNeedingProfile = ideas.filter(
+    (idea) =>
+      idea.status === "APPROVED" &&
+      (!idea.projectProfile ||
+        idea.projectProfile.status === "NOT_STARTED" ||
+        idea.projectProfile.status === "DRAFT" ||
+        idea.projectProfile.status === "NEEDS_REVISION"),
+  );
 
   return (
     <div className="container page-shell" style={{ maxWidth: 860 }}>
@@ -138,8 +146,13 @@ export default async function PermanentLookupPage({
       <p className="eyebrow">HỒ SƠ CỦA BẠN</p>
       <h1>{submitter.fullName}</h1>
       <p className="page-intro">
-        Mã sinh viên: <strong>{submitter.studentCode}</strong> · Lớp:{" "}
-        <strong>{submitter.className}</strong>
+        Mã SV / Mã cán bộ: <strong>{submitter.studentCode}</strong>
+        {submitter.className?.trim() ? (
+          <>
+            {" "}
+            · Lớp: <strong>{submitter.className}</strong>
+          </>
+        ) : null}
       </p>
 
       <div
@@ -149,7 +162,7 @@ export default async function PermanentLookupPage({
           alignItems: "center",
           gap: 12,
           borderLeft: "4px solid var(--brand-orange)",
-          marginBottom: 32,
+          marginBottom: ideasNeedingProfile.length > 0 ? 16 : 32,
         }}
       >
         <Clock size={20} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
@@ -158,154 +171,43 @@ export default async function PermanentLookupPage({
         </div>
       </div>
 
-      {/* SECTION 1: NHIỆM VỤ ĐÃ ĐĂNG KÝ (PHASE 3) */}
-      <div style={{ marginBottom: 40 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
-          <h2 style={{ fontSize: "clamp(17px, 4vw, 20px)", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-            <Briefcase size={20} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
-            Nhiệm vụ đặt hàng đã đăng ký ({taskApplications.length})
-          </h2>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/nhiem-vu">Xem Sảnh nhiệm vụ</Link>
+      {ideasNeedingProfile.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 14,
+            padding: "16px 18px",
+            borderRadius: "10px",
+            background: "rgba(234, 88, 12, 0.09)",
+            border: "1px solid rgba(234, 88, 12, 0.35)",
+            borderLeft: "4px solid var(--brand-orange)",
+            marginBottom: 32,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: "1 1 260px" }}>
+            <AlertTriangle size={20} style={{ color: "var(--brand-orange)", flexShrink: 0, marginTop: 2 }} />
+            <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "var(--foreground)" }}>
+              <strong style={{ color: "var(--brand-orange)", display: "block", marginBottom: 2 }}>
+                Yêu cầu hoàn thiện hồ sơ Vòng 2 ({ideasNeedingProfile.length} đề tài):
+              </strong>
+              Ý tưởng của bạn đã vượt qua Vòng 1! Vui lòng kê khai đầy đủ danh sách <strong>Thành viên tham gia &amp; Giảng viên hướng dẫn</strong> và nhấn <strong>&ldquo;Gửi hồ sơ cho Ban tổ chức&rdquo;</strong> để xác nhận tham gia Vòng 2.
+            </div>
+          </div>
+          <Button
+            asChild
+            size="sm"
+            style={{ backgroundColor: "var(--brand-orange)", color: "#fff", flexShrink: 0 }}
+          >
+            <a href={`#ho-so-vong-2-${ideasNeedingProfile[0].id}`}>Hoàn thiện hồ sơ ngay</a>
           </Button>
         </div>
+      )}
 
-        {taskApplications.length === 0 ? (
-          <div className="form-panel" style={{ width: "100%", textAlign: "center", padding: "32px 20px" }}>
-            <Briefcase size={36} style={{ margin: "0 auto 10px", color: "var(--muted)" }} />
-            <p style={{ margin: 0, color: "var(--muted)" }}>Bạn chưa đăng ký thực hiện nhiệm vụ đặt hàng nào.</p>
-            <Button asChild style={{ marginTop: 14 }} size="sm">
-              <Link href="/nhiem-vu">Khám phá Sảnh nhiệm vụ</Link>
-            </Button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {taskApplications.map((app) => {
-              const appBadge = APPLICATION_STATUS_BADGES[app.status];
-              return (
-                <div
-                  key={app.id}
-                  className="form-panel"
-                  style={{
-                    width: "100%",
-                    padding: "clamp(16px, 4vw, 24px)",
-                    borderRadius: "12px",
-                    border: "1px solid var(--border)",
-                    background: "var(--surface)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          fontSize: 12,
-                          color: "var(--muted)",
-                          marginBottom: 6,
-                        }}
-                      >
-                        <Building2 size={13} />
-                        {app.task.orderingOrganization}
-                      </span>
-                      <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>
-                        <Link
-                          href={`/nhiem-vu/${app.task.slug}`}
-                          style={{ color: "inherit", textDecoration: "none" }}
-                          className="hover:underline"
-                        >
-                          {app.task.title}
-                        </Link>
-                      </h3>
-                    </div>
-
-                    <span
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "999px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: appBadge.bg,
-                        color: appBadge.color,
-                        border: `1px solid ${appBadge.border}`,
-                      }}
-                    >
-                      {APPLICATION_STATUS_LABELS[app.status]}
-                    </span>
-                  </div>
-
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "var(--muted)",
-                      lineHeight: 1.5,
-                      margin: "8px 0 14px 0",
-                      overflowWrap: "anywhere",
-                    }}
-                  >
-                    <strong>Đề xuất giải pháp:</strong> {app.proposal}
-                  </p>
-
-                  {app.adminFeedback && (
-                    <div
-                      style={{
-                        margin: "12px 0",
-                        padding: "10px 14px",
-                        borderRadius: "8px",
-                        background:
-                          app.status === "SELECTED"
-                            ? "rgba(22, 163, 74, 0.08)"
-                            : "rgba(107, 114, 128, 0.08)",
-                        border: `1px solid ${appBadge.border}`,
-                        fontSize: 13,
-                      }}
-                    >
-                      <strong>Phản hồi từ Ban tổ chức:</strong> {app.adminFeedback}
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      borderTop: "1px solid var(--border)",
-                      paddingTop: 12,
-                      fontSize: 12,
-                      color: "var(--muted)",
-                    }}
-                  >
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <Users size={14} />
-                      Đội ngũ: <strong>{app.members.length} thành viên</strong> (
-                      {app.members.filter((m) => m.memberType === "STUDENT").length} SV,{" "}
-                      {app.members.filter((m) => m.memberType === "ADVISOR").length} GVHD)
-                    </span>
-                    <Button asChild size="sm" variant="outline">
-                      <Link href={`/nhiem-vu/${app.task.slug}`}>Xem chi tiết nhiệm vụ</Link>
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* SECTION 2: Ý TƯỞNG DỰ THI (PHASE 2A & 2C) */}
-      <div>
+      {/* SECTION 1: Ý TƯỞNG DỰ THI (PHASE 2A & 2C) */}
+      <div style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: "clamp(17px, 4vw, 20px)", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
           <FileText size={20} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
           Ý tưởng dự thi của bạn ({ideas.length})
@@ -488,7 +390,7 @@ export default async function PermanentLookupPage({
 
                   {/* Phase 2C & Revision 2: Project Profile, Members & Recruitment for APPROVED Ideas */}
                   {idea.status === "APPROVED" && (
-                    <>
+                    <div id={`ho-so-vong-2-${idea.id}`} style={{ scrollMarginTop: 92 }}>
                       <ProjectProfileLeaderPanel
                         key={
                           idea.projectProfile?.id
@@ -510,13 +412,159 @@ export default async function PermanentLookupPage({
                         ideaId={idea.id}
                         lookupToken={token}
                       />
-                    </>
+                    </div>
                   )}
                 </div>
               );
             })
           )}
         </div>
+      </div>
+
+      {/* SECTION 2: NHIỆM VỤ ĐÃ ĐĂNG KÝ (PHASE 3) */}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+          <h2 style={{ fontSize: "clamp(17px, 4vw, 20px)", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            <Briefcase size={20} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
+            Nhiệm vụ đặt hàng đã đăng ký ({taskApplications.length})
+          </h2>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/nhiem-vu">Xem Sảnh nhiệm vụ</Link>
+          </Button>
+        </div>
+
+        {taskApplications.length === 0 ? (
+          <div className="form-panel" style={{ width: "100%", textAlign: "center", padding: "32px 20px" }}>
+            <Briefcase size={36} style={{ margin: "0 auto 10px", color: "var(--muted)" }} />
+            <p style={{ margin: 0, color: "var(--muted)" }}>Bạn chưa đăng ký thực hiện nhiệm vụ đặt hàng nào.</p>
+            <Button asChild style={{ marginTop: 14 }} size="sm">
+              <Link href="/nhiem-vu">Khám phá Sảnh nhiệm vụ</Link>
+            </Button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {taskApplications.map((app) => {
+              const appBadge = APPLICATION_STATUS_BADGES[app.status];
+              return (
+                <div
+                  key={app.id}
+                  className="form-panel"
+                  style={{
+                    width: "100%",
+                    padding: "clamp(16px, 4vw, 24px)",
+                    borderRadius: "12px",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      flexWrap: "wrap",
+                      gap: 12,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <div>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: 12,
+                          color: "var(--muted)",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <Building2 size={13} />
+                        {app.task.orderingOrganization}
+                      </span>
+                      <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>
+                        <Link
+                          href={`/nhiem-vu/${app.task.slug}`}
+                          style={{ color: "inherit", textDecoration: "none" }}
+                          className="hover:underline"
+                        >
+                          {app.task.title}
+                        </Link>
+                      </h3>
+                    </div>
+
+                    <span
+                      style={{
+                        padding: "4px 12px",
+                        borderRadius: "999px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        background: appBadge.bg,
+                        color: appBadge.color,
+                        border: `1px solid ${appBadge.border}`,
+                      }}
+                    >
+                      {APPLICATION_STATUS_LABELS[app.status]}
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--muted)",
+                      lineHeight: 1.5,
+                      margin: "8px 0 14px 0",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    <strong>Đề xuất giải pháp:</strong> {app.proposal}
+                  </p>
+
+                  {app.adminFeedback && (
+                    <div
+                      style={{
+                        margin: "12px 0",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        background:
+                          app.status === "SELECTED"
+                            ? "rgba(22, 163, 74, 0.08)"
+                            : "rgba(107, 114, 128, 0.08)",
+                        border: `1px solid ${appBadge.border}`,
+                        fontSize: 13,
+                      }}
+                    >
+                      <strong>Phản hồi từ Ban tổ chức:</strong> {app.adminFeedback}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: 12,
+                      borderTop: "1px solid var(--border)",
+                      paddingTop: 12,
+                      fontSize: 12,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <Users size={14} />
+                      Đội ngũ: <strong>{app.members.length} thành viên</strong> (
+                      {app.members.filter((m) => m.memberType === "STUDENT").length} SV,{" "}
+                      {app.members.filter((m) => m.memberType === "ADVISOR").length} GVHD)
+                    </span>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/nhiem-vu/${app.task.slug}`}>Xem chi tiết nhiệm vụ</Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -18,7 +18,6 @@ export const memberInputSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .max(30, "Mã sinh viên không được vượt quá 30 ký tự.")
     .optional()
     .nullable()
     .transform((val) => (val ? val.trim() : null)),
@@ -69,7 +68,6 @@ export const draftMemberInputSchema = z.object({
   studentCode: z
     .string()
     .trim()
-    .max(30, "Mã sinh viên không được vượt quá 30 ký tự.")
     .optional()
     .nullable()
     .transform((val) => (val ? val.trim() : null)),
