@@ -14,6 +14,7 @@ import { getDb } from "@/lib/db";
 import {
   STATUS_BADGE_VARIANTS,
   STATUS_LABELS,
+  getIdeaDisplayBadge,
 } from "@/lib/domain/idea-state-machine";
 import {
   resolveHistoryActorDisplay,
@@ -93,7 +94,7 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
 
   const actorMap = new Map(actorUsers.map((user) => [user.id, user]));
 
-  const badge = STATUS_BADGE_VARIANTS[idea.status];
+  const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
 
   return (
     <div className="container" style={{ maxWidth: 1100 }}>

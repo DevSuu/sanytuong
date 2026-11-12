@@ -5,6 +5,7 @@ import { getAdminSession } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { Prisma, IdeaStatus } from "@/generated/prisma/client";
 import { AdminIdeasTable, IdeaTableRow } from "@/components/admin-ideas-table";
+import { IDEA_FILTER_STATUS, IdeaFilterStatus } from "@/lib/domain/idea-state-machine";
 
 export const metadata = {
   title: "Danh sách Ý tưởng — Quản trị UTT",
@@ -40,31 +41,51 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
   const order = resolvedParams.order === "asc" ? "asc" : "desc";
 
   // Validate status filter
-  const validStatus = Object.values(IdeaStatus).includes(
-    statusParam as IdeaStatus
+  const validStatus = Object.values(IDEA_FILTER_STATUS).includes(
+    statusParam as IdeaFilterStatus
   )
-    ? (statusParam as IdeaStatus)
+    ? (statusParam as IdeaFilterStatus)
     : undefined;
 
   const db = getDb();
 
   // Construct Prisma WHERE clause with server-side security & sanitization
-  const where: Prisma.IdeaWhereInput = {};
+  const andConditions: Prisma.IdeaWhereInput[] = [];
 
-  if (validStatus) {
-    where.status = validStatus;
+  if (validStatus === "PROFILE_COMPLETED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: { in: ["SUBMITTED", "COMPLETED"] },
+      },
+    });
+  } else if (validStatus === IdeaStatus.APPROVED) {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      OR: [
+        { projectProfile: null },
+        { projectProfile: { status: { notIn: ["SUBMITTED", "COMPLETED"] } } },
+      ],
+    });
+  } else if (validStatus) {
+    andConditions.push({ status: validStatus as IdeaStatus });
   }
 
   if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { referenceCode: { contains: search, mode: "insensitive" } },
-      { submitter: { fullName: { contains: search, mode: "insensitive" } } },
-      { submitter: { studentCode: { contains: search, mode: "insensitive" } } },
-      { submitter: { email: { contains: search, mode: "insensitive" } } },
-      { submitter: { className: { contains: search, mode: "insensitive" } } },
-    ];
+    andConditions.push({
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { referenceCode: { contains: search, mode: "insensitive" } },
+        { submitter: { fullName: { contains: search, mode: "insensitive" } } },
+        { submitter: { studentCode: { contains: search, mode: "insensitive" } } },
+        { submitter: { email: { contains: search, mode: "insensitive" } } },
+        { submitter: { className: { contains: search, mode: "insensitive" } } },
+      ],
+    });
   }
+
+  const where: Prisma.IdeaWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
 
   // Determine orderBy
   const orderBy: Prisma.IdeaOrderByWithRelationInput =
@@ -90,6 +111,11 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
             email: true,
           },
         },
+        projectProfile: {
+          select: {
+            status: true,
+          },
+        },
       },
     }),
   ]);
@@ -100,6 +126,7 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
     title: idea.title,
     field: idea.field,
     status: idea.status,
+    profileStatus: idea.projectProfile?.status ?? null,
     createdAt: idea.createdAt.toISOString(),
     updatedAt: idea.updatedAt.toISOString(),
     submitter: {

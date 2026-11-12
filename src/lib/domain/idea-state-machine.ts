@@ -139,3 +139,48 @@ export const STATUS_BADGE_VARIANTS: Record<
     border: "rgba(220, 38, 38, 0.3)",
   },
 };
+
+export const IDEA_FILTER_STATUS = {
+  ...IdeaStatus,
+  PROFILE_COMPLETED: "PROFILE_COMPLETED",
+} as const;
+
+export type IdeaFilterStatus =
+  (typeof IDEA_FILTER_STATUS)[keyof typeof IDEA_FILTER_STATUS];
+
+export const IDEA_FILTER_LABELS: Record<IdeaFilterStatus, string> = {
+  PENDING_VERIFICATION: "Chờ xác minh email",
+  SUBMITTED: "Đã gửi",
+  UNDER_REVIEW: "Đang xét duyệt",
+  NEEDS_REVISION: "Cần chỉnh sửa",
+  APPROVED: "Đã duyệt",
+  PROFILE_COMPLETED: "Đã hoàn thiện hồ sơ",
+  REJECTED: "Đã từ chối",
+};
+
+export const PROFILE_COMPLETED_BADGE = {
+  label: "Đã hoàn thiện hồ sơ",
+  bg: "rgba(124, 58, 237, 0.12)",
+  color: "#7c3aed",
+  border: "rgba(124, 58, 237, 0.32)",
+};
+
+export function isIdeaProfileCompleted(
+  ideaStatus: IdeaStatus | string,
+  profileStatus?: string | null,
+): boolean {
+  return (
+    ideaStatus === IdeaStatus.APPROVED &&
+    (profileStatus === "SUBMITTED" || profileStatus === "COMPLETED")
+  );
+}
+
+export function getIdeaDisplayBadge(
+  ideaStatus: IdeaStatus,
+  profileStatus?: string | null,
+): { label: string; bg: string; color: string; border: string } {
+  if (isIdeaProfileCompleted(ideaStatus, profileStatus)) {
+    return PROFILE_COMPLETED_BADGE;
+  }
+  return STATUS_BADGE_VARIANTS[ideaStatus];
+}

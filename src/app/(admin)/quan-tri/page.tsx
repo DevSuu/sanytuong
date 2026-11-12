@@ -17,7 +17,7 @@ import {
 import { getAdminSession } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { IdeaStatus, EmailJobStatus, EmailJobType } from "@/generated/prisma/client";
-import { STATUS_BADGE_VARIANTS } from "@/lib/domain/idea-state-machine";
+import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
 import { getEmailJobPriority } from "@/lib/email/queue";
 import { getGoogleSheetsConfig } from "@/lib/google-sheets/sync-service";
 import { AdminGoogleSheetsPanel } from "@/components/admin-google-sheets-panel";
@@ -68,6 +68,7 @@ export default async function AdminDashboardPage() {
     totalRecruitmentPosts,
     recentIdeas,
     googleSheetsConfig,
+    profileCompletedCount,
   ] = await Promise.all([
     db.idea.count(),
     db.idea.groupBy({
@@ -108,9 +109,22 @@ export default async function AdminDashboardPage() {
             className: true,
           },
         },
+        projectProfile: {
+          select: {
+            status: true,
+          },
+        },
       },
     }),
     getGoogleSheetsConfig(),
+    db.idea.count({
+      where: {
+        status: IdeaStatus.APPROVED,
+        projectProfile: {
+          status: { in: ["SUBMITTED", "COMPLETED"] },
+        },
+      },
+    }),
   ]);
 
   const emailStatusCounts: Record<EmailJobStatus, number> = {
@@ -184,13 +198,22 @@ export default async function AdminDashboardPage() {
       desc: "Yêu cầu thí sinh bổ sung hồ sơ",
     },
     {
-      title: "Đã duyệt vào vòng trong",
-      count: statusCounts.APPROVED,
+      title: "Đã duyệt (Chờ HS Vòng 2)",
+      count: Math.max(0, statusCounts.APPROVED - profileCompletedCount),
       href: "/quan-tri/y-tuong?status=APPROVED",
       icon: CheckCircle2,
       color: "#16a34a",
       bg: "rgba(22, 163, 74, 0.08)",
-      desc: "Đạt tiêu chuẩn đánh giá",
+      desc: "Đã qua Vòng 1 • Chờ nộp HS Vòng 2",
+    },
+    {
+      title: "Đã hoàn thiện hồ sơ",
+      count: profileCompletedCount,
+      href: "/quan-tri/y-tuong?status=PROFILE_COMPLETED",
+      icon: CheckCircle2,
+      color: "#7c3aed",
+      bg: "rgba(124, 58, 237, 0.08)",
+      desc: "Đã nộp đủ thành viên & GVHD Vòng 2",
     },
     {
       title: "Đã từ chối",
@@ -442,7 +465,7 @@ export default async function AdminDashboardPage() {
               </thead>
               <tbody>
                 {recentIdeas.map((idea) => {
-                  const badge = STATUS_BADGE_VARIANTS[idea.status];
+                  const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
                   return (
                     <tr
                       key={idea.id}

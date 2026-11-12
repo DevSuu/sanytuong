@@ -21,8 +21,8 @@ import {
 } from "@tanstack/react-table";
 import {
   IdeaStatus,
-  STATUS_LABELS,
-  STATUS_BADGE_VARIANTS,
+  IDEA_FILTER_LABELS,
+  getIdeaDisplayBadge,
 } from "@/lib/domain/idea-state-machine";
 import { AdminExportButton } from "./admin-export-button";
 
@@ -32,6 +32,7 @@ export interface IdeaTableRow {
   title: string;
   field?: string | null;
   status: IdeaStatus;
+  profileStatus?: string | null;
   createdAt: string;
   updatedAt: string;
   submitter: {
@@ -170,7 +171,7 @@ export function AdminIdeasTable({
       header: "Trạng thái",
       cell: (info) => {
         const val = info.getValue();
-        const badge = STATUS_BADGE_VARIANTS[val];
+        const badge = getIdeaDisplayBadge(val, info.row.original.profileStatus);
         return (
           <span
             style={{
@@ -396,7 +397,7 @@ export function AdminIdeasTable({
               }}
             >
               <option value="">Tất cả trạng thái</option>
-              {Object.entries(STATUS_LABELS).map(([key, label]) => (
+              {Object.entries(IDEA_FILTER_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>

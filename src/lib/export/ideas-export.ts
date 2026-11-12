@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { getDb } from "@/lib/db";
 import { Prisma, IdeaStatus } from "@/generated/prisma/client";
-import { STATUS_LABELS } from "@/lib/domain/idea-state-machine";
+import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
 import { IdeasExportQuery } from "@/lib/validation/export-schema";
 import {
   createStyledWorkbook,
@@ -26,22 +26,42 @@ export async function exportIdeasToExcel(
   actor: AdminActorInfo
 ): Promise<ExcelJS.Workbook> {
   const db = getDb();
-  const where: Prisma.IdeaWhereInput = {};
+  const andConditions: Prisma.IdeaWhereInput[] = [];
 
-  if (filters.status && Object.values(IdeaStatus).includes(filters.status as IdeaStatus)) {
-    where.status = filters.status as IdeaStatus;
+  if (filters.status === "PROFILE_COMPLETED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: { in: ["SUBMITTED", "COMPLETED"] },
+      },
+    });
+  } else if (filters.status === IdeaStatus.APPROVED) {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      OR: [
+        { projectProfile: null },
+        { projectProfile: { status: { notIn: ["SUBMITTED", "COMPLETED"] } } },
+      ],
+    });
+  } else if (filters.status && Object.values(IdeaStatus).includes(filters.status as IdeaStatus)) {
+    andConditions.push({ status: filters.status as IdeaStatus });
   }
 
   if (filters.search) {
-    where.OR = [
-      { title: { contains: filters.search, mode: "insensitive" } },
-      { referenceCode: { contains: filters.search, mode: "insensitive" } },
-      { submitter: { fullName: { contains: filters.search, mode: "insensitive" } } },
-      { submitter: { studentCode: { contains: filters.search, mode: "insensitive" } } },
-      { submitter: { email: { contains: filters.search, mode: "insensitive" } } },
-      { submitter: { className: { contains: filters.search, mode: "insensitive" } } },
-    ];
+    andConditions.push({
+      OR: [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { referenceCode: { contains: filters.search, mode: "insensitive" } },
+        { submitter: { fullName: { contains: filters.search, mode: "insensitive" } } },
+        { submitter: { studentCode: { contains: filters.search, mode: "insensitive" } } },
+        { submitter: { email: { contains: filters.search, mode: "insensitive" } } },
+        { submitter: { className: { contains: filters.search, mode: "insensitive" } } },
+      ],
+    });
   }
+
+  const where: Prisma.IdeaWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
 
   const order = filters.order || "desc";
   const orderBy: Prisma.IdeaOrderByWithRelationInput =
@@ -82,6 +102,11 @@ export async function exportIdeasToExcel(
           bankName: true,
           bankBranch: true,
           email: true,
+        },
+      },
+      projectProfile: {
+        select: {
+          status: true,
         },
       },
     },
@@ -127,7 +152,7 @@ export async function exportIdeasToExcel(
         stt: idx + 1,
         referenceCode: idea.referenceCode || idea.id,
         title: idea.title,
-        status: STATUS_LABELS[idea.status] || idea.status,
+        status: getIdeaDisplayBadge(idea.status, idea.projectProfile?.status).label,
         authorName: idea.submitter.fullName,
         studentCode: idea.submitter.studentCode,
         field: idea.field || "",

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IdeaStatus } from "@/lib/domain/idea-state-machine";
+import { IDEA_FILTER_STATUS, IdeaFilterStatus } from "@/lib/domain/idea-state-machine";
 import { ProjectProfileStatus } from "@/lib/domain/profile-state-machine";
 import { TaskStatus } from "@/lib/domain/task-state-machine";
 import { AwardStatus } from "@/lib/domain/award-state-machine";
@@ -10,7 +10,7 @@ export const ideasExportQuerySchema = z.object({
     .string()
     .trim()
     .refine(
-      (val) => !val || Object.values(IdeaStatus).includes(val as IdeaStatus),
+      (val) => !val || Object.values(IDEA_FILTER_STATUS).includes(val as IdeaFilterStatus),
       { message: "Trạng thái ý tưởng không hợp lệ." }
     )
     .optional(),

@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { STATUS_LABELS } from "@/lib/domain/idea-state-machine";
+import { STATUS_LABELS, getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
 import { PROFILE_STATUS_LABELS } from "@/lib/domain/profile-state-machine";
 import {
   TASK_STATUS_LABELS,
@@ -289,7 +289,7 @@ export async function buildFullGoogleSheetsPayload(
   ] = await Promise.all([
     db.idea.findMany({
       orderBy: { createdAt: "desc" },
-      include: { submitter: true },
+      include: { submitter: true, projectProfile: { select: { status: true } } },
     }),
     db.submitter.findMany({
       orderBy: { createdAt: "desc" },
@@ -445,7 +445,7 @@ export async function buildFullGoogleSheetsPayload(
       cell(idea.id),
       cell(idea.referenceCode),
       cell(idea.title),
-      cell(STATUS_LABELS[idea.status] || idea.status),
+      cell(getIdeaDisplayBadge(idea.status, idea.projectProfile?.status).label),
       cell(idea.status),
       idea.version,
       cell(idea.field),

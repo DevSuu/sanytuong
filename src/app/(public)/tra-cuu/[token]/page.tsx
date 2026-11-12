@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { hashToken } from "@/lib/crypto";
-import { STATUS_LABELS, STATUS_BADGE_VARIANTS } from "@/lib/domain/idea-state-machine";
+import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_BADGES,
@@ -224,7 +224,7 @@ export default async function PermanentLookupPage({
             </div>
           ) : (
             ideas.map((idea) => {
-              const badge = STATUS_BADGE_VARIANTS[idea.status];
+              const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
               const latestHistory = idea.statusHistory[0];
               const btcFeedbackHistory = idea.statusHistory.find(
                 (h) => h.newStatus === "NEEDS_REVISION" || h.actorType === "ADMIN"
@@ -299,7 +299,7 @@ export default async function PermanentLookupPage({
                           border: `1px solid ${badge.border}`,
                         }}
                       >
-                        {STATUS_LABELS[idea.status]}
+                        {badge.label}
                       </span>
 
                       {idea.status === "NEEDS_REVISION" && (
