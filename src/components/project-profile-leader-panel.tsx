@@ -97,7 +97,9 @@ export function ProjectProfileLeaderPanel({
       initialProfile.status === ProjectProfileStatus.NEEDS_REVISION,
   );
 
-  // Initialize members: if empty or NOT_STARTED with only Leader, prefill Member #1 as Student Leader + Member #2 as empty Advisor
+  // Detect whether original submitter is a Lecturer/Advisor (empty className) vs Student
+  const isSubmitterAdvisor = !submitter.className || submitter.className.trim().length === 0;
+
   const defaultAdvisorSlot: LeaderPanelMember = {
     memberType: MemberType.ADVISOR,
     isLeader: false,
@@ -109,29 +111,66 @@ export function ProjectProfileLeaderPanel({
     department: "",
   };
 
-  const defaultMembers: LeaderPanelMember[] = [
-    {
-      memberType: MemberType.STUDENT,
-      isLeader: true,
-      fullName: submitter.fullName,
-      studentCode: submitter.studentCode,
-      className: submitter.className,
-      email: submitter.email,
-      phone: "",
-      department: "",
-    },
-    defaultAdvisorSlot,
-  ];
+  const defaultStudentSlot: LeaderPanelMember = {
+    memberType: MemberType.STUDENT,
+    isLeader: false,
+    fullName: "",
+    studentCode: "",
+    className: "",
+    email: "",
+    phone: "",
+    department: "",
+  };
+
+  const defaultMembers: LeaderPanelMember[] = isSubmitterAdvisor
+    ? [
+        {
+          memberType: MemberType.ADVISOR,
+          isLeader: true,
+          fullName: submitter.fullName,
+          studentCode: submitter.studentCode,
+          className: "",
+          email: submitter.email,
+          phone: "",
+          department: "",
+        },
+        defaultStudentSlot,
+      ]
+    : [
+        {
+          memberType: MemberType.STUDENT,
+          isLeader: true,
+          fullName: submitter.fullName,
+          studentCode: submitter.studentCode,
+          className: submitter.className,
+          email: submitter.email,
+          phone: "",
+          department: "",
+        },
+        defaultAdvisorSlot,
+      ];
 
   const [members, setMembers] = useState<LeaderPanelMember[]>(() => {
     if (!profile?.members || profile.members.length === 0) {
       return defaultMembers;
     }
-    if (
-      profile.status === ProjectProfileStatus.NOT_STARTED &&
-      !profile.members.some((m) => m.memberType === MemberType.ADVISOR)
-    ) {
-      return [...profile.members, defaultAdvisorSlot];
+    if (profile.status === ProjectProfileStatus.NOT_STARTED) {
+      if (isSubmitterAdvisor && profile.members.length === 1) {
+        return [
+          {
+            ...profile.members[0],
+            memberType: MemberType.ADVISOR,
+            isLeader: true,
+          },
+          defaultStudentSlot,
+        ];
+      }
+      if (!isSubmitterAdvisor && !profile.members.some((m) => m.memberType === MemberType.ADVISOR)) {
+        return [...profile.members, defaultAdvisorSlot];
+      }
+      if (isSubmitterAdvisor && !profile.members.some((m) => m.memberType === MemberType.STUDENT)) {
+        return [...profile.members, defaultStudentSlot];
+      }
     }
     return profile.members;
   });
@@ -196,23 +235,18 @@ export function ProjectProfileLeaderPanel({
     const updated = [...members];
     updated[index] = { ...updated[index], [field]: value };
 
-    // If setting isLeader = true, automatically unset on all others
+    // If setting isLeader = true, automatically unset on all others (both Student and Advisor can be Leader)
     if (field === "isLeader" && value === true) {
       for (let i = 0; i < updated.length; i++) {
         if (i !== index) {
           updated[i].isLeader = false;
         }
       }
-      // Force role to STUDENT
-      updated[index].memberType = MemberType.STUDENT;
     }
 
-    // If setting memberType = ADVISOR, cannot be leader
-    if (field === "memberType" && value === MemberType.ADVISOR) {
-      if (updated[index].isLeader) {
-        updated[index].isLeader = false;
-        // make sure someone else is leader or alert
-      }
+    // Preserve submitter's code on the leader slot when switching role
+    if (updated[index].isLeader && !updated[index].studentCode) {
+      updated[index].studentCode = submitter.studentCode;
     }
 
     setMembers(updated);
@@ -682,26 +716,24 @@ export function ProjectProfileLeaderPanel({
                       <span>GVHD (Giảng viên)</span>
                     </label>
 
-                    {isSV && (
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          marginLeft: "auto",
-                          cursor: "pointer",
-                          color: member.isLeader ? "var(--brand-orange)" : "var(--muted)",
-                          fontWeight: member.isLeader ? 700 : 400,
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={member.isLeader}
-                          onChange={(e) => updateMember(idx, "isLeader", e.target.checked)}
-                        />
-                        <span>Trưởng nhóm</span>
-                      </label>
-                    )}
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginLeft: "auto",
+                        cursor: "pointer",
+                        color: member.isLeader ? "var(--brand-orange)" : "var(--muted)",
+                        fontWeight: member.isLeader ? 700 : 400,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={member.isLeader}
+                        onChange={(e) => updateMember(idx, "isLeader", e.target.checked)}
+                      />
+                      <span>Trưởng nhóm / Đại diện</span>
+                    </label>
                   </div>
 
                   {/* Member Input Fields */}

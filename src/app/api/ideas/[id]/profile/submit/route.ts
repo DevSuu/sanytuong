@@ -165,7 +165,11 @@ export async function POST(
           isLeader: m.isLeader,
           fullName: m.fullName.trim(),
           email: m.email.trim().toLowerCase(),
-          studentCode: m.studentCode ? m.studentCode.trim().toUpperCase() : null,
+          studentCode: m.studentCode
+            ? m.studentCode.trim().toUpperCase()
+            : m.isLeader
+            ? authContext.submitter.studentCode.trim().toUpperCase()
+            : null,
           className: m.className ? m.className.trim() : null,
           phone: m.phone ? m.phone.trim() : null,
           department: m.department ? m.department.trim() : null,

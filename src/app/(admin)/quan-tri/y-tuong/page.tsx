@@ -56,7 +56,14 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
     andConditions.push({
       status: IdeaStatus.APPROVED,
       projectProfile: {
-        status: { in: ["SUBMITTED", "COMPLETED"] },
+        status: "SUBMITTED",
+      },
+    });
+  } else if (validStatus === "PROFILE_APPROVED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: "COMPLETED",
       },
     });
   } else if (validStatus === IdeaStatus.APPROVED) {

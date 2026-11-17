@@ -15,6 +15,13 @@ import { getAppUrl } from "@/lib/app-url";
 import { checkTargetRateLimit } from "@/lib/security/rate-limiter";
 import { triggerGoogleSheetsAutoSync } from "@/lib/google-sheets/sync-service";
 
+class SubmitterIdentityMismatchError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SubmitterIdentityMismatchError";
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -118,24 +125,44 @@ export async function POST(req: Request) {
           },
           include: { lookupCredential: true },
         });
-      } else if (!submitter.emailVerifiedAt || isCallerAuthenticatedOwner) {
-        // SECURITY FIX: Only allow updating Submitter PII & Bank Account details
-        // if the account has NOT yet been verified, OR if the caller proved ownership via lookupToken.
-        // Prevents unauthenticated attackers from overwriting a verified student's bank account or PII.
-        submitter = await tx.submitter.update({
-          where: { id: submitter.id },
-          data: {
-            fullName: normFullName,
-            studentCode: normStudentCode,
-            className: className ? className.trim() : submitter.className,
-            major: major ? major.trim() : submitter.major,
-            phone: normPhone,
-            bankAccountNumber: normBankAccount,
-            bankName: normBankName,
-            bankBranch: normBankBranch,
-          },
-          include: { lookupCredential: true },
-        });
+      } else {
+        // Guard against accidental typo or different student reusing an already-registered email,
+        // which would otherwise overwrite fullName / studentCode for all previous ideas of this email.
+        const existingNameNorm = submitter.fullName
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLowerCase();
+        const inputNameNorm = normFullName
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLowerCase();
+        const existingCodeNorm = submitter.studentCode.trim().toUpperCase();
+        const inputCodeNorm = normStudentCode.trim().toUpperCase();
+
+        if (
+          existingNameNorm !== inputNameNorm ||
+          existingCodeNorm !== inputCodeNorm
+        ) {
+          throw new SubmitterIdentityMismatchError(
+            `Địa chỉ email "${email.trim()}" đã được đăng ký cho tác giả "${submitter.fullName}" (Mã: ${submitter.studentCode}). Vui lòng kiểm tra và nhập đúng Họ tên & Mã số đã đăng ký với email này (hoặc sử dụng địa chỉ email riêng nếu bạn là người nộp khác).`,
+          );
+        }
+
+        if (!submitter.emailVerifiedAt || isCallerAuthenticatedOwner) {
+          // Only update contact & bank details when identity (fullName + studentCode) matches
+          submitter = await tx.submitter.update({
+            where: { id: submitter.id },
+            data: {
+              className: className ? className.trim() : submitter.className,
+              major: major ? major.trim() : submitter.major,
+              phone: normPhone,
+              bankAccountNumber: normBankAccount,
+              bankName: normBankName,
+              bankBranch: normBankBranch,
+            },
+            include: { lookupCredential: true },
+          });
+        }
       }
 
       // 2. Ensure Permanent Lookup Credential exists (1 email = 1 permanent lookup identity)
@@ -298,6 +325,15 @@ export async function POST(req: Request) {
       data: result,
     });
   } catch (error: unknown) {
+    if (error instanceof SubmitterIdentityMismatchError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: error.message,
+        },
+        { status: 400 },
+      );
+    }
     console.error("[SubmitIdeaError]", error);
     return NextResponse.json(
       {

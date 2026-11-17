@@ -32,7 +32,14 @@ export async function exportIdeasToExcel(
     andConditions.push({
       status: IdeaStatus.APPROVED,
       projectProfile: {
-        status: { in: ["SUBMITTED", "COMPLETED"] },
+        status: "SUBMITTED",
+      },
+    });
+  } else if (filters.status === "PROFILE_APPROVED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: "COMPLETED",
       },
     });
   } else if (filters.status === IdeaStatus.APPROVED) {

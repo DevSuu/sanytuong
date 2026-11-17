@@ -252,6 +252,58 @@ export function AdminProfileDetailActions({
         </div>
       )}
 
+      {/* Status context banner */}
+      {status === ProjectProfileStatus.SUBMITTED && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "rgba(124, 58, 237, 0.1)",
+            border: "1px solid rgba(124, 58, 237, 0.3)",
+            fontSize: 12.5,
+            color: "var(--foreground)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: "#7c3aed" }}>Chờ duyệt hồ sơ đội Vòng 2:</strong> Nhóm sinh viên đã hoàn thiện danh sách thành viên &amp; GVHD ({currentMembers.length} người). Vui lòng kiểm tra và phê duyệt để đội chính thức tham dự Vòng 2.
+        </div>
+      )}
+      {status === ProjectProfileStatus.COMPLETED && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "rgba(13, 148, 136, 0.1)",
+            border: "1px solid rgba(13, 148, 136, 0.3)",
+            fontSize: 12.5,
+            color: "var(--foreground)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: "#0d9488" }}>✓ Đã duyệt hồ sơ đội tham dự Vòng 2:</strong> Danh sách thành viên &amp; GVHD của đội đã được Ban tổ chức phê duyệt hoàn tất.
+        </div>
+      )}
+      {(status === ProjectProfileStatus.NOT_STARTED ||
+        status === ProjectProfileStatus.DRAFT ||
+        status === ProjectProfileStatus.NEEDS_REVISION) && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            borderRadius: 8,
+            background: "rgba(100, 116, 139, 0.1)",
+            border: "1px solid rgba(100, 116, 139, 0.25)",
+            fontSize: 12.5,
+            color: "var(--muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          Đã duyệt ý tưởng Vòng 1 — Đang chờ Trưởng nhóm kê khai và gửi hồ sơ đội thi Vòng 2.
+        </div>
+      )}
+
       {/* Main Action Buttons */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         {status === ProjectProfileStatus.SUBMITTED && (
@@ -262,7 +314,7 @@ export function AdminProfileDetailActions({
               style={{ backgroundColor: "#16a34a", fontSize: 13 }}
             >
               <CheckCircle2 size={16} style={{ marginRight: 6 }} />
-              Duyệt hoàn tất hồ sơ
+              Duyệt hồ sơ đội Vòng 2
             </Button>
             <Button
               variant="outline"
@@ -271,7 +323,7 @@ export function AdminProfileDetailActions({
               style={{ borderColor: "#d97706", color: "#d97706", fontSize: 13 }}
             >
               <AlertTriangle size={15} style={{ marginRight: 6 }} />
-              Yêu cầu bổ sung thông tin
+              Yêu cầu bổ sung hồ sơ đội
             </Button>
           </>
         )}
@@ -287,7 +339,7 @@ export function AdminProfileDetailActions({
           style={{ fontSize: 13 }}
         >
           <Edit3 size={15} style={{ marginRight: 6 }} />
-          Chỉnh sửa trực tiếp
+          Chỉnh sửa trực tiếp hồ sơ đội
         </Button>
       </div>
 

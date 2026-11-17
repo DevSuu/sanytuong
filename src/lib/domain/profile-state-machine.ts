@@ -192,13 +192,15 @@ export function validateProfileBusinessRules(
   }
 
   const leader = leaders[0];
-  if (leader.memberType !== MemberType.STUDENT) {
-    throw new DomainValidationError("Trưởng nhóm / Đại diện bắt buộc phải là Sinh viên. GVHD không được làm Trưởng nhóm.");
-  }
 
-  // Leader must match original submitter identity
+  // Leader must match original submitter identity (supports both Student and Lecturer/Advisor submitters)
   const normSubmitterCode = submitter.studentCode.trim().toUpperCase();
-  const normLeaderCode = (leader.studentCode || "").trim().toUpperCase();
+  const normLeaderCode = (
+    leader.studentCode ||
+    (leader.memberType === MemberType.ADVISOR ? submitter.studentCode : "")
+  )
+    .trim()
+    .toUpperCase();
   const normSubmitterEmail = submitter.emailNormalized.trim().toLowerCase();
   const normLeaderEmail = leader.email.trim().toLowerCase();
 

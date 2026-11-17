@@ -7,6 +7,7 @@ import {
   FileText,
   History,
   User,
+  Users,
   XCircle,
 } from "lucide-react";
 import { getAdminSession } from "@/lib/auth";
@@ -14,8 +15,16 @@ import { getDb } from "@/lib/db";
 import {
   STATUS_BADGE_VARIANTS,
   STATUS_LABELS,
+  PROFILE_COMPLETED_BADGE,
+  PROFILE_APPROVED_BADGE,
   getIdeaDisplayBadge,
 } from "@/lib/domain/idea-state-machine";
+import {
+  MemberType,
+  PROFILE_STATUS_LABELS,
+  PROFILE_STATUS_BADGES,
+} from "@/lib/domain/profile-state-machine";
+import { AdminProfileDetailActions } from "@/components/admin-profile-detail-actions";
 import {
   resolveHistoryActorDisplay,
   HistoryActorUser,
@@ -63,9 +72,10 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
         orderBy: { createdAt: "desc" },
       },
       projectProfile: {
-        select: {
-          id: true,
-          status: true,
+        include: {
+          members: { orderBy: { orderIndex: "asc" } },
+          editRequests: { orderBy: { createdAt: "desc" } },
+          history: { orderBy: { createdAt: "desc" } },
         },
       },
     },
@@ -75,12 +85,14 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Resolve actors for status history entries
+  // Resolve actors for both Idea status history and Round 2 Profile history entries
+  const profileHistoryList = idea.projectProfile?.history ?? [];
   const actorUserIds = Array.from(
     new Set(
-      idea.statusHistory
-        .map((h) => h.actorId)
-        .filter((id): id is string => Boolean(id && id.trim() !== ""))
+      [
+        ...idea.statusHistory.map((h) => h.actorId),
+        ...profileHistoryList.map((ph) => ph.actorId),
+      ].filter((id): id is string => Boolean(id && id.trim() !== ""))
     )
   );
 
@@ -379,6 +391,119 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Round 2 Team Roster Card */}
+          {idea.projectProfile && idea.projectProfile.members.length > 0 && (
+            <div
+              style={{
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius)",
+                padding: "clamp(16px, 3.5vw, 22px)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  marginBottom: 14,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Users size={18} color="var(--brand-orange)" />
+                  <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                    Hồ sơ Đội thi &amp; GVHD Vòng 2 ({idea.projectProfile.members.length} thành viên)
+                  </h2>
+                </div>
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 999,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    background: PROFILE_STATUS_BADGES[idea.projectProfile.status].bg,
+                    color: PROFILE_STATUS_BADGES[idea.projectProfile.status].color,
+                    border: `1px solid ${PROFILE_STATUS_BADGES[idea.projectProfile.status].border}`,
+                  }}
+                >
+                  Hồ sơ đội: {PROFILE_STATUS_LABELS[idea.projectProfile.status]}
+                </span>
+              </div>
+
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+                  <thead>
+                    <tr
+                      style={{
+                        borderBottom: "1px solid var(--border)",
+                        textAlign: "left",
+                        color: "var(--muted)",
+                      }}
+                    >
+                      <th style={{ padding: "8px 10px" }}>#</th>
+                      <th style={{ padding: "8px 10px" }}>Họ và tên</th>
+                      <th style={{ padding: "8px 10px" }}>Vai trò</th>
+                      <th style={{ padding: "8px 10px" }}>Mã SV / Khoa</th>
+                      <th style={{ padding: "8px 10px" }}>Lớp / SĐT</th>
+                      <th style={{ padding: "8px 10px" }}>Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {idea.projectProfile.members.map((m, idx) => (
+                      <tr
+                        key={m.id || idx}
+                        style={{
+                          borderBottom: "1px solid var(--border)",
+                          background: m.isLeader ? "rgba(242, 92, 5, 0.04)" : "transparent",
+                        }}
+                      >
+                        <td style={{ padding: "9px 10px" }}>{idx + 1}</td>
+                        <td style={{ padding: "9px 10px", fontWeight: 600 }}>
+                          {m.fullName}
+                          {m.isLeader && (
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                fontSize: 10,
+                                padding: "2px 6px",
+                                borderRadius: 4,
+                                background: "var(--brand-orange)",
+                                color: "#fff",
+                                fontWeight: 700,
+                              }}
+                            >
+                              Trưởng nhóm
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: "9px 10px" }}>
+                          {m.memberType === MemberType.ADVISOR ? (
+                            <span style={{ color: "#0284c7", fontWeight: 600 }}>GVHD</span>
+                          ) : (
+                            <span>Sinh viên</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "9px 10px" }}>
+                          {m.memberType === MemberType.ADVISOR
+                            ? m.department || "—"
+                            : m.studentCode || "—"}
+                        </td>
+                        <td style={{ padding: "9px 10px" }}>
+                          {m.memberType === MemberType.ADVISOR
+                            ? m.phone || "—"
+                            : m.className || "—"}
+                        </td>
+                        <td style={{ padding: "9px 10px", color: "var(--muted)" }}>{m.email}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Detailed Proposal Sections */}
           <div
             style={{
@@ -565,7 +690,17 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
           <AdminIdeaActionPanel
             ideaId={idea.id}
             currentStatus={idea.status}
-          />
+          >
+            {idea.status === "APPROVED" && idea.projectProfile ? (
+              <AdminProfileDetailActions
+                profileId={idea.projectProfile.id}
+                currentTitle={idea.title}
+                status={idea.projectProfile.status}
+                currentMembers={idea.projectProfile.members}
+                editRequests={idea.projectProfile.editRequests}
+              />
+            ) : undefined}
+          </AdminIdeaActionPanel>
 
           {/* Audit History Timeline */}
           <div
@@ -613,9 +748,91 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                   marginLeft: 8,
                 }}
               >
-                {idea.statusHistory.map((history) => {
-                  const targetBadge = STATUS_BADGE_VARIANTS[history.newStatus];
-                  return (
+                {[
+                  ...idea.statusHistory.map((h) => ({
+                    id: h.id,
+                    createdAt: h.createdAt,
+                    fromLabel: STATUS_LABELS[h.oldStatus],
+                    targetBadge: STATUS_BADGE_VARIANTS[h.newStatus],
+                    actorDisplay: resolveHistoryActorDisplay(h, actorMap),
+                    reason: h.reason,
+                  })),
+                  ...profileHistoryList
+                    .filter((ph) => ph.action !== "PROFILE_CREATED" && ph.action !== "PROFILE_SAVED_DRAFT")
+                    .map((ph) => {
+                      const adminActor = ph.actorId ? actorMap.get(ph.actorId) : undefined;
+                      const actorDisplay =
+                        ph.actorRole === "LEADER"
+                          ? `${idea.submitter.fullName} (Trưởng nhóm)`
+                          : adminActor
+                          ? `${adminActor.name} (Quản trị viên)`
+                          : "Quản trị viên BTC";
+
+                      let fromLabel = "Đã duyệt";
+                      let targetBadge = PROFILE_COMPLETED_BADGE;
+
+                      if (ph.action === "PROFILE_SUBMITTED") {
+                        fromLabel = "Đã duyệt";
+                        targetBadge = PROFILE_COMPLETED_BADGE;
+                      } else if (ph.action === "PROFILE_COMPLETED") {
+                        fromLabel = "Đã hoàn thiện hồ sơ";
+                        targetBadge = PROFILE_APPROVED_BADGE;
+                      } else if (ph.action === "PROFILE_NEEDS_REVISION") {
+                        fromLabel = "Đã hoàn thiện hồ sơ";
+                        targetBadge = {
+                          label: "Yêu cầu bổ sung HS đội",
+                          bg: "rgba(217, 119, 6, 0.12)",
+                          color: "#d97706",
+                          border: "rgba(217, 119, 6, 0.3)",
+                        };
+                      } else if (ph.action === "ADMIN_EDITED_PROFILE") {
+                        fromLabel = "Hồ sơ đội Vòng 2";
+                        targetBadge = {
+                          label: "Admin chỉnh sửa trực tiếp",
+                          bg: "rgba(2, 132, 199, 0.12)",
+                          color: "#0284c7",
+                          border: "rgba(2, 132, 199, 0.3)",
+                        };
+                      } else if (ph.action === "PROFILE_EDIT_REQUEST_CREATED") {
+                        fromLabel = "Hồ sơ đội Vòng 2";
+                        targetBadge = {
+                          label: "Xin phép chỉnh sửa HS",
+                          bg: "rgba(217, 119, 6, 0.12)",
+                          color: "#d97706",
+                          border: "rgba(217, 119, 6, 0.3)",
+                        };
+                      } else if (ph.action === "PROFILE_EDIT_REQUEST_APPROVED") {
+                        fromLabel = "Yêu cầu sửa HS";
+                        targetBadge = {
+                          label: "Chấp thuận cho sửa HS",
+                          bg: "rgba(22, 163, 74, 0.12)",
+                          color: "#16a34a",
+                          border: "rgba(22, 163, 74, 0.3)",
+                        };
+                      } else if (ph.action === "PROFILE_EDIT_REQUEST_REJECTED") {
+                        fromLabel = "Yêu cầu sửa HS";
+                        targetBadge = {
+                          label: "Từ chối sửa HS",
+                          bg: "rgba(220, 38, 38, 0.12)",
+                          color: "#dc2626",
+                          border: "rgba(220, 38, 38, 0.3)",
+                        };
+                      }
+
+                      return {
+                        id: ph.id,
+                        createdAt: ph.createdAt,
+                        fromLabel,
+                        targetBadge,
+                        actorDisplay,
+                        reason: ph.reason,
+                      };
+                    }),
+                ]
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((history) => {
+                    const targetBadge = history.targetBadge;
+                    return (
                     <div
                       key={history.id}
                       style={{
@@ -646,7 +863,7 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                         }}
                       >
                         <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                          {STATUS_LABELS[history.oldStatus]} →
+                          {history.fromLabel} →
                         </span>
                         <span
                           style={{
@@ -680,7 +897,7 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                       <div style={{ fontSize: 12, color: "var(--muted)" }}>
                         Người thực hiện:{" "}
                         <strong data-testid={`history-actor-${history.id}`}>
-                          {resolveHistoryActorDisplay(history, actorMap)}
+                          {history.actorDisplay}
                         </strong>
                       </div>
 

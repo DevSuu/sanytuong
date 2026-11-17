@@ -22,11 +22,13 @@ import {
 interface AdminIdeaActionPanelProps {
   ideaId: string;
   currentStatus: IdeaStatus;
+  children?: React.ReactNode;
 }
 
 export function AdminIdeaActionPanel({
   ideaId,
   currentStatus,
+  children,
 }: AdminIdeaActionPanelProps) {
   const router = useRouter();
   const [selectedTargetStatus, setSelectedTargetStatus] =
@@ -235,17 +237,21 @@ export function AdminIdeaActionPanel({
       )}
 
       {possibleTransitions.length === 0 ? (
-        <div
-          style={{
-            fontSize: 13,
-            color: "var(--muted)",
-            padding: "12px 0",
-          }}
-        >
-          Hồ sơ đã đạt trạng thái kết thúc (
-          <strong>{STATUS_LABELS[currentStatus]}</strong>). Không còn thao tác
-          chuyển trạng thái khả dụng.
-        </div>
+        children ? (
+          <div style={{ padding: "4px 0 8px 0" }}>{children}</div>
+        ) : (
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--muted)",
+              padding: "12px 0",
+            }}
+          >
+            Hồ sơ đã đạt trạng thái kết thúc (
+            <strong>{STATUS_LABELS[currentStatus]}</strong>). Không còn thao tác
+            chuyển trạng thái khả dụng.
+          </div>
+        )
       ) : (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {possibleTransitions.map((item) => {

@@ -140,10 +140,14 @@ export async function POST(
               members: {
                 create: {
                   isLeader: true,
-                  memberType: "STUDENT",
+                  memberType:
+                    idea.submitter.className && idea.submitter.className.trim().length > 0
+                      ? "STUDENT"
+                      : "ADVISOR",
                   fullName: idea.submitter.fullName,
                   studentCode: idea.submitter.studentCode,
                   className: idea.submitter.className,
+                  department: idea.submitter.major || null,
                   email: idea.submitter.email.trim().toLowerCase(),
                   phone: idea.submitter.phone || null,
                   orderIndex: 0,
