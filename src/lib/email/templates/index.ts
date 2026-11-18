@@ -506,14 +506,20 @@ Ban tổ chức Cuộc thi Sáng tạo UTT`;
       const title = String(payload.title || payload.ideaTitle || "Đề tài");
       const refCode = String(payload.referenceCode || "");
       const lookupUrl = payload.lookupUrl ? String(payload.lookupUrl) : "";
+      const exampleFileName = `${refCode || "TTST-02-XX"}.pdf`;
 
-      const subject = `[UTT - Sáng tạo 4.0] Xác nhận hồ sơ đề tài "${title}" đã hoàn tất`;
+      const subject = `[UTT - Sáng tạo 4.0] Đã duyệt hồ sơ đội Vòng 2 "${refCode}" — Hướng dẫn nộp Poster`;
       const text = `Kính gửi ${leaderName},
 
 Ban tổ chức Cuộc thi Thử thách Sáng tạo 4.0 UTT trân trọng thông báo:
-Hồ sơ đề tài "${title}" (${refCode}) đã được Ban tổ chức kiểm tra và xác nhận HOÀN TẤT chính thức.
+Hồ sơ đội thi Vòng 2 của đề tài "${title}" (${refCode}) đã được Ban tổ chức kiểm tra và PHÊ DUYỆT HOÀN TẤT.
 
-Bạn có thể tra cứu thông tin hồ sơ tại:
+HƯỚNG DẪN NỘP POSTER DỰ THI VÒNG 2 (TRỰC TIẾP TRÊN WEBSITE):
+1. Truy cập Trang quản lý hồ sơ của đội trên website qua liên kết bên dưới.
+2. Tại mục Nộp Poster dự thi Vòng 2, chọn tệp Poster (định dạng .PDF — tối đa 150MB) và nhấn "Tải lên & Nộp Poster ngay".
+3. Hệ thống sẽ tự động đổi tên tệp theo đúng chuẩn mã đề tài (${exampleFileName}), lưu trữ an toàn và ghi nhận trạng thái Đã nộp Poster ngay lập tức.
+
+Truy cập Trang hồ sơ & Nộp Poster ngay:
 ${lookupUrl}
 
 Trân trọng,
@@ -526,22 +532,31 @@ Ban tổ chức Cuộc thi Sáng tạo UTT`;
         <p>Ban tổ chức Cuộc thi Thử thách Sáng tạo 4.0 UTT trân trọng thông báo:</p>
 
         <div class="info-box">
-          <div class="info-label">Đề tài chính thức hoàn tất</div>
+          <div class="info-label">Đã duyệt hồ sơ đội tham dự Vòng 2</div>
           <div class="info-value">${refCode ? `[${refCode}] ` : ""}${title}</div>
         </div>
 
         <div class="reason-box" style="border-left-color: #16a34a; background-color: #f0fdf4; color: #166534;">
-          <strong>Trạng thái: Đã hoàn tất (COMPLETED)</strong><br/>
-          Toàn bộ thông tin thành viên và Giảng viên hướng dẫn đã được ghi nhận vào hệ thống cuộc thi.
+          <strong>✓ Trạng thái: Đã duyệt hồ sơ đội Vòng 2</strong><br/>
+          Danh sách Thành viên tham gia và Giảng viên hướng dẫn của đội đã được xác nhận hợp lệ.
         </div>
 
-        <p>Chúc nhóm của bạn đạt kết quả xuất sắc trong các vòng thi tiếp theo!</p>
+        <div class="info-box" style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0284c7;">
+          <div style="font-size: 13px; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px;">
+            📤 Hướng dẫn nộp Poster dự thi Vòng 2 (Trực tiếp trên website)
+          </div>
+          <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #334155; line-height: 1.7;">
+            <li>Bấm nút màu cam bên dưới để mở <strong>Trang quản lý hồ sơ</strong> của đội trên website.</li>
+            <li>Tại mục <strong>Nộp Poster dự thi Vòng 2</strong>, chọn tệp Poster (định dạng <code>.PDF</code> — tối đa <code>150MB</code>) và nhấn <strong>&ldquo;Tải lên &amp; Nộp Poster ngay&rdquo;</strong>.</li>
+            <li>Hệ thống sẽ <strong>tự động đổi tên tệp theo đúng chuẩn mã đề tài (<code style="color: #c2410c; font-weight: 700;">${exampleFileName}</code>)</strong>, lưu trữ an toàn và ghi nhận trạng thái <strong>Đã nộp Poster</strong> ngay lập tức.</li>
+          </ol>
+        </div>
 
         ${
           lookupUrl
             ? `
         <div class="btn-container">
-          <a href="${lookupUrl}" class="btn" style="background-color: #16a34a;" target="_blank">Xem hồ sơ hoàn tất</a>
+          <a href="${lookupUrl}" class="btn" style="background-color: #ea580c;" target="_blank">Truy cập Trang hồ sơ &amp; Nộp Poster ngay</a>
         </div>
         `
             : ""

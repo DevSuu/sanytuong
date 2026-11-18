@@ -11,6 +11,11 @@ import { EmailJobType, IdeaRecruitmentPostStatus } from "@/generated/prisma/clie
 import { enqueueEmailJob, processPendingEmailJobs } from "@/lib/email/queue";
 import { getAppUrl } from "@/lib/app-url";
 import { triggerGoogleSheetsAutoSync } from "@/lib/google-sheets/sync-service";
+import {
+  extractPosterDriveMetadata,
+  isValidPosterFileName,
+  provisionPosterDriveFolder,
+} from "@/lib/google-drive/poster-drive-service";
 
 export async function POST(
   req: Request,
@@ -39,6 +44,8 @@ export async function POST(
             },
           },
         },
+        members: true,
+        history: { orderBy: { createdAt: "desc" } },
       },
     });
 
@@ -67,6 +74,53 @@ export async function POST(
         console.error("[LookupTokenDecryptionError]", err);
       }
     }
+
+    // Provision private Google Drive folder for the Team Leader when approving Round 2 profile
+    const leaderMember = profile.members.find((m) => m.isLeader);
+    const leaderEmail = leaderMember?.email || profile.idea.submitter.email;
+    const rawDriveMeta =
+      action === "APPROVE"
+        ? await provisionPosterDriveFolder({
+            referenceCode: profile.idea.referenceCode,
+            ideaTitle: profile.idea.title,
+            leaderEmail,
+          })
+        : null;
+
+    const existingPosterMeta =
+      action === "APPROVE"
+        ? extractPosterDriveMetadata(
+            profile.history,
+            profile.idea.referenceCode,
+            leaderEmail,
+          )
+        : null;
+
+    const posterDriveMeta = rawDriveMeta
+      ? (() => {
+          const hasValidDriveFiles =
+            rawDriveMeta.files.length > 0 &&
+            rawDriveMeta.files.every((f) =>
+              isValidPosterFileName(f.name, profile.idea.referenceCode),
+            );
+          const keepSubmitted =
+            existingPosterMeta?.posterStatus === "SUBMITTED" ||
+            hasValidDriveFiles;
+          return keepSubmitted
+            ? {
+                ...rawDriveMeta,
+                files:
+                  rawDriveMeta.files.length > 0
+                    ? rawDriveMeta.files
+                    : existingPosterMeta?.files || [],
+                posterStatus: "SUBMITTED" as const,
+                submittedAt:
+                  existingPosterMeta?.submittedAt || new Date().toISOString(),
+                leaderNote: existingPosterMeta?.leaderNote || null,
+              }
+            : rawDriveMeta;
+        })()
+      : null;
 
     const updated = await db.$transaction(async (tx) => {
       if (action === "APPROVE") {
@@ -98,7 +152,17 @@ export async function POST(
             actorId: session.user.id,
             actorRole: "ADMIN",
             action: ProfileHistoryAction.PROFILE_COMPLETED,
-            reason: reason || "Ban tổ chức duyệt hoàn tất hồ sơ đề tài.",
+            reason:
+              reason ||
+              (posterDriveMeta?.folderUrl
+                ? `Ban tổ chức duyệt hồ sơ đội tham dự Vòng 2 và khởi tạo thư mục Google Drive nộp Poster (${posterDriveMeta.folderName}).`
+                : "Ban tổ chức duyệt hoàn tất hồ sơ đội tham dự Vòng 2."),
+            metadata: posterDriveMeta
+              ? {
+                  eventType: "PROFILE_APPROVED_DRIVE_CREATED",
+                  posterDrive: JSON.parse(JSON.stringify(posterDriveMeta)),
+                }
+              : undefined,
           },
         });
 
@@ -110,6 +174,9 @@ export async function POST(
             title: profile.idea.title,
             referenceCode: profile.idea.referenceCode,
             lookupUrl,
+            driveFolderUrl: posterDriveMeta?.folderUrl || "",
+            driveFolderName: posterDriveMeta?.folderName || "",
+            editorEmail: posterDriveMeta?.editorEmail || leaderEmail,
           },
           idempotencyKey: `profile-completed-${profile.id}-v${p.version}`,
         });

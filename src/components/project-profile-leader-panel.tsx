@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmailTypoSuggestion } from "@/components/ui/email-typo-suggestion";
+import { StudentPosterDrivePanel } from "@/components/student-poster-drive-panel";
+import type { PosterDriveMetadata } from "@/lib/google-drive/poster-drive-service";
+import { formatVietnamDate } from "@/lib/google-drive/poster-file-utils";
 import {
   ProjectProfileStatus,
   MemberType,
@@ -52,6 +55,7 @@ export interface LeaderPanelProfileHistory {
   id: string;
   action: string;
   reason?: string | null;
+  metadata?: unknown;
   createdAt: string | Date;
 }
 
@@ -69,6 +73,7 @@ export interface LeaderPanelProfile {
 
 export interface ProjectProfileLeaderPanelProps {
   ideaId: string;
+  referenceCode?: string;
   initialTitle?: string;
   lookupToken: string;
   submitter: {
@@ -78,14 +83,17 @@ export interface ProjectProfileLeaderPanelProps {
     email: string;
   };
   initialProfile: LeaderPanelProfile | null;
+  initialPosterDrive?: PosterDriveMetadata | null;
 }
 
 export function ProjectProfileLeaderPanel({
   ideaId,
+  referenceCode = "",
   initialTitle = "",
   lookupToken,
   submitter,
   initialProfile,
+  initialPosterDrive = null,
 }: ProjectProfileLeaderPanelProps) {
   const router = useRouter();
   const [profile, setProfile] = useState<LeaderPanelProfile | null>(initialProfile);
@@ -380,55 +388,78 @@ export function ProjectProfileLeaderPanel({
     }
   };
 
+  const rosterStatusLabelMap: Record<ProjectProfileStatus, string> = {
+    [ProjectProfileStatus.NOT_STARTED]: "Danh sách đội: Chưa kê khai",
+    [ProjectProfileStatus.DRAFT]: "Danh sách đội: Bản nháp",
+    [ProjectProfileStatus.SUBMITTED]: "Danh sách đội: Chờ BTC duyệt",
+    [ProjectProfileStatus.NEEDS_REVISION]: "Danh sách đội: Cần bổ sung",
+    [ProjectProfileStatus.COMPLETED]: "Danh sách đội: Đã duyệt",
+  };
+
   return (
-    <div
-      style={{
-        marginTop: 24,
-        padding: "clamp(14px, 4vw, 24px)",
-        borderRadius: "12px",
-        border: "1px solid var(--border)",
-        background: "var(--surface)",
-      }}
-    >
-      {/* Header & Status */}
+    <div style={{ marginTop: 18 }}>
+      {currentStatus === ProjectProfileStatus.COMPLETED && !isEditing && (
+        <div style={{ marginBottom: 16 }}>
+          <StudentPosterDrivePanel
+            ideaId={ideaId}
+            referenceCode={referenceCode}
+            lookupToken={lookupToken}
+            leaderEmail={
+              members.find((m) => m.isLeader)?.email || submitter.email
+            }
+            initialPosterDrive={initialPosterDrive ?? null}
+          />
+        </div>
+      )}
+
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 20,
-          borderBottom: "1px solid var(--border)",
-          paddingBottom: 16,
+          padding: "clamp(14px, 4vw, 24px)",
+          borderRadius: "12px",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Users size={22} style={{ color: "var(--brand-orange)" }} />
-          <div>
-            <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
-              HỒ SƠ ĐỀ TÀI & THÀNH VIÊN
-            </h4>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              Quy mô nhóm: Tối thiểu 2 người (1 SV + 1 GVHD), tối đa 10 người
-            </span>
+        {/* Header & Status */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+            marginBottom: 20,
+            borderBottom: "1px solid var(--border)",
+            paddingBottom: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Users size={22} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
+            <div>
+              <h4 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
+                HỒ SƠ ĐỀ TÀI & THÀNH VIÊN
+              </h4>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                Quy mô nhóm: Tối thiểu 2 người (1 SV + 1 GVHD), tối đa 10 người
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <span
-            style={{
-              padding: "4px 12px",
-              borderRadius: "999px",
-              fontSize: 12,
-              fontWeight: 600,
-              background: badge.bg,
-              color: badge.color,
-              border: `1px solid ${badge.border}`,
-            }}
-          >
-            Trạng thái: {PROFILE_STATUS_LABELS[currentStatus]}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <span
+              style={{
+                padding: "4px 12px",
+                borderRadius: "999px",
+                fontSize: 12,
+                fontWeight: 600,
+                background: badge.bg,
+                color: badge.color,
+                border: `1px solid ${badge.border}`,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {rosterStatusLabelMap[currentStatus] || PROFILE_STATUS_LABELS[currentStatus]}
+            </span>
 
           {currentStatus === ProjectProfileStatus.COMPLETED && !isEditing && (
             <Button
@@ -901,9 +932,9 @@ export function ProjectProfileLeaderPanel({
               <thead>
                 <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left", color: "var(--muted)" }}>
                   <th style={{ padding: "8px 12px" }}>#</th>
-                  <th style={{ padding: "8px 12px" }}>Họ và tên</th>
-                  <th style={{ padding: "8px 12px" }}>Vai trò</th>
-                  <th style={{ padding: "8px 12px" }}>MSSV / Khoa</th>
+                  <th style={{ padding: "8px 12px", minWidth: 145 }}>Họ và tên</th>
+                  <th style={{ padding: "8px 12px", whiteSpace: "nowrap" }}>Vai trò</th>
+                  <th style={{ padding: "8px 12px", whiteSpace: "nowrap" }}>MSSV / Khoa</th>
                   <th style={{ padding: "8px 12px" }}>Lớp</th>
                   <th style={{ padding: "8px 12px" }}>Email</th>
                 </tr>
@@ -918,8 +949,8 @@ export function ProjectProfileLeaderPanel({
                     }}
                   >
                     <td style={{ padding: "10px 12px" }}>{idx + 1}</td>
-                    <td style={{ padding: "10px 12px", fontWeight: 600 }}>
-                      {m.fullName}
+                    <td style={{ padding: "10px 12px", fontWeight: 600, minWidth: 145 }}>
+                      <span>{m.fullName}</span>
                       {m.isLeader && (
                         <span
                           style={{
@@ -929,13 +960,15 @@ export function ProjectProfileLeaderPanel({
                             background: "var(--brand-orange)",
                             color: "#fff",
                             borderRadius: 4,
+                            whiteSpace: "nowrap",
+                            display: "inline-block",
                           }}
                         >
                           Trưởng nhóm
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "10px 12px" }}>
+                    <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>
                       {m.memberType === MemberType.STUDENT ? "Sinh viên" : "GVHD"}
                     </td>
                     <td style={{ padding: "10px 12px" }}>
@@ -970,6 +1003,8 @@ export function ProjectProfileLeaderPanel({
         </div>
       )}
 
+
+
       {/* Edit Requests Section */}
       {profile?.editRequests && profile.editRequests.length > 0 && (
         <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
@@ -1001,7 +1036,7 @@ export function ProjectProfileLeaderPanel({
                     }}
                   >
                     <span style={{ fontWeight: 600 }}>
-                      Ngày yêu cầu: {new Date(er.createdAt).toLocaleDateString("vi-VN")}
+                      Ngày yêu cầu: {formatVietnamDate(er.createdAt)}
                     </span>
                     <span
                       style={{
@@ -1157,6 +1192,7 @@ export function ProjectProfileLeaderPanel({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

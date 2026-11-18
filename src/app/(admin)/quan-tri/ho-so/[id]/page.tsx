@@ -18,6 +18,14 @@ import {
   EDIT_REQUEST_STATUS_BADGES,
 } from "@/lib/domain/profile-state-machine";
 import { AdminProfileDetailActions } from "@/components/admin-profile-detail-actions";
+import { POSTER_SUBMITTED_BADGE } from "@/lib/domain/idea-state-machine";
+import {
+  extractPosterDriveMetadata,
+  hasSubmittedPosterInHistory,
+  getPosterFolderName,
+  getPosterRootFolderName,
+} from "@/lib/google-drive/poster-drive-service";
+import { AdminPosterDrivePanel } from "@/components/admin-poster-drive-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +67,27 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
 
   const { idea, members, editRequests, history } = profile;
   const badge = PROFILE_STATUS_BADGES[profile.status];
+  const hasPosterSubmitted = hasSubmittedPosterInHistory(history);
+  const leaderMemberEmail =
+    members.find((m) => m.isLeader)?.email || idea.submitter.email;
+  const posterDriveMeta =
+    extractPosterDriveMetadata(
+      history,
+      idea.referenceCode,
+      leaderMemberEmail,
+    ) || {
+      folderId: null,
+      folderName: getPosterFolderName(idea.referenceCode),
+      rootFolderName: getPosterRootFolderName(),
+      folderUrl: null,
+      editorEmail: leaderMemberEmail,
+      posterStatus: "WAITING_UPLOAD" as const,
+      submittedAt: null,
+      leaderNote: null,
+      files: [],
+      lastCheckedAt: null,
+      driveWarning: null,
+    };
 
   return (
     <div className="container" style={{ maxWidth: 1100 }}>
@@ -90,8 +119,8 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
             gap: 16,
           }}
         >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <div style={{ minWidth: 0, flex: "1 1 300px" }}>
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
               <span
                 style={{
                   fontSize: 13,
@@ -117,8 +146,32 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
               >
                 {PROFILE_STATUS_LABELS[profile.status]}
               </span>
+              {profile.status === "COMPLETED" && hasPosterSubmitted && (
+                <span
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "999px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    background: POSTER_SUBMITTED_BADGE.bg,
+                    color: POSTER_SUBMITTED_BADGE.color,
+                    border: `1px solid ${POSTER_SUBMITTED_BADGE.border}`,
+                  }}
+                >
+                  {POSTER_SUBMITTED_BADGE.label}
+                </span>
+              )}
             </div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 22,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+              }}
+            >
               {idea.title}
             </h1>
           </div>
@@ -138,7 +191,7 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
             gap: 16,
           }}
         >
@@ -149,6 +202,7 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
               borderRadius: 10,
               border: "1px solid var(--border)",
               background: "var(--surface)",
+              minWidth: 0,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -163,14 +217,14 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
                 <strong>{idea.submitter.fullName}</strong>
               </div>
               <div>
-                <span style={{ color: "var(--muted)" }}>Mã sinh viên:</span>{" "}
+                <span style={{ color: "var(--muted)" }}>Mã SV / Mã CB:</span>{" "}
                 <strong>{idea.submitter.studentCode}</strong>
               </div>
               <div>
                 <span style={{ color: "var(--muted)" }}>Lớp:</span>{" "}
-                <strong>{idea.submitter.className}</strong>
+                <strong>{idea.submitter.className || "—"}</strong>
               </div>
-              <div>
+              <div style={{ overflowWrap: "anywhere" }}>
                 <span style={{ color: "var(--muted)" }}>Email:</span>{" "}
                 <strong>{idea.submitter.email}</strong>
               </div>
@@ -190,6 +244,7 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
               borderRadius: 10,
               border: "1px solid var(--border)",
               background: "var(--surface)",
+              minWidth: 0,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -253,6 +308,7 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
                     borderBottom: "2px solid var(--border)",
                     textAlign: "left",
                     color: "var(--muted)",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   <th style={{ padding: "10px 12px" }}>#</th>
@@ -286,13 +342,15 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
                             borderRadius: 4,
                             background: "var(--brand-orange)",
                             color: "#fff",
+                            whiteSpace: "nowrap",
+                            display: "inline-block",
                           }}
                         >
                           Trưởng nhóm
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "12px" }}>
+                    <td style={{ padding: "12px", whiteSpace: "nowrap" }}>
                       {m.memberType === MemberType.STUDENT ? "Sinh viên" : "GVHD"}
                     </td>
                     <td style={{ padding: "12px" }}>
@@ -307,6 +365,16 @@ export default async function AdminProfileDetailPage({ params }: PageProps) {
             </table>
           </div>
         </div>
+
+        {/* Round 2 Poster Drive Panel (shown when Round 2 profile is COMPLETED) */}
+        {profile.status === "COMPLETED" && (
+          <AdminPosterDrivePanel
+            profileId={profile.id}
+            referenceCode={idea.referenceCode}
+            leaderEmail={leaderMemberEmail}
+            initialPosterDrive={posterDriveMeta}
+          />
+        )}
 
         {/* Edit Requests Section */}
         {editRequests.length > 0 && (

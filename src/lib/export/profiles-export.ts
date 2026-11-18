@@ -2,6 +2,10 @@ import ExcelJS from "exceljs";
 import { getDb } from "@/lib/db";
 import { Prisma, ProjectProfileStatus, MemberType } from "@/generated/prisma/client";
 import { PROFILE_STATUS_LABELS } from "@/lib/domain/profile-state-machine";
+import {
+  hasSubmittedPosterInHistory,
+  extractPosterDriveMetadata,
+} from "@/lib/google-drive/poster-drive-service";
 import { ProfilesExportQuery } from "@/lib/validation/export-schema";
 import {
   createStyledWorkbook,
@@ -86,6 +90,14 @@ export async function exportProfilesToExcel(
           department: true,
         },
       },
+      history: {
+        select: {
+          action: true,
+          reason: true,
+          metadata: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -108,6 +120,8 @@ export async function exportProfilesToExcel(
     { header: "Email Trưởng nhóm", key: "leaderEmail", width: 26 },
     { header: "Tổng số thành viên", key: "totalMembers", width: 18 },
     { header: "Số GVHD", key: "advisorCount", width: 14 },
+    { header: "Trạng thái Poster", key: "posterStatus", width: 20 },
+    { header: "Link Folder Drive Poster", key: "posterFolderUrl", width: 38 },
     { header: "Ngày gửi hồ sơ", key: "submittedAt", width: 18 },
     { header: "Ngày hoàn thành", key: "completedAt", width: 18 },
     { header: "Cập nhật lần cuối", key: "updatedAt", width: 18 },
@@ -116,6 +130,12 @@ export async function exportProfilesToExcel(
   profiles.forEach((p, idx) => {
     const leader = p.members.find((m) => m.isLeader) || p.members[0];
     const advisorCount = p.members.filter((m) => m.memberType === "ADVISOR").length;
+    const posterSubmitted = hasSubmittedPosterInHistory(p.history);
+    const posterMeta = extractPosterDriveMetadata(
+      p.history,
+      p.idea.referenceCode,
+      leader?.email || p.idea.submitter.email,
+    );
 
     sheetProfiles.addRow(
       sanitizeExcelRow({
@@ -128,6 +148,13 @@ export async function exportProfilesToExcel(
         leaderEmail: leader?.email || p.idea.submitter.email,
         totalMembers: p.members.length,
         advisorCount,
+        posterStatus:
+          p.status === "COMPLETED"
+            ? posterSubmitted
+              ? "Đã nộp Poster"
+              : "Chờ nộp Poster"
+            : "—",
+        posterFolderUrl: posterMeta?.folderUrl || "",
         submittedAt: formatExcelDate(p.submittedAt),
         completedAt: formatExcelDate(p.completedAt),
         updatedAt: formatExcelDate(p.updatedAt),

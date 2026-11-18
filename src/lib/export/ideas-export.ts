@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { getDb } from "@/lib/db";
 import { Prisma, IdeaStatus } from "@/generated/prisma/client";
 import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
+import { hasSubmittedPosterInHistory, extractPosterDriveMetadata } from "@/lib/google-drive/poster-drive-service";
 import { IdeasExportQuery } from "@/lib/validation/export-schema";
 import {
   createStyledWorkbook,
@@ -40,6 +41,23 @@ export async function exportIdeasToExcel(
       status: IdeaStatus.APPROVED,
       projectProfile: {
         status: "COMPLETED",
+        history: {
+          none: {
+            reason: { startsWith: "[POSTER_SUBMITTED]" },
+          },
+        },
+      },
+    });
+  } else if (filters.status === "POSTER_SUBMITTED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: "COMPLETED",
+        history: {
+          some: {
+            reason: { startsWith: "[POSTER_SUBMITTED]" },
+          },
+        },
       },
     });
   } else if (filters.status === IdeaStatus.APPROVED) {
@@ -114,6 +132,14 @@ export async function exportIdeasToExcel(
       projectProfile: {
         select: {
           status: true,
+          history: {
+            select: {
+              action: true,
+              reason: true,
+              metadata: true,
+              createdAt: true,
+            },
+          },
         },
       },
     },
@@ -148,6 +174,7 @@ export async function exportIdeasToExcel(
     { header: "Tính khả thi", key: "feasibility", width: 35 },
     { header: "Tiềm năng phát triển", key: "potential", width: 35 },
     { header: "Hỗ trợ thành viên Vòng 2", key: "needsMemberSupport", width: 24 },
+    { header: "Link Folder Drive Poster", key: "posterFolderUrl", width: 38 },
     { header: "Ngày gửi hồ sơ", key: "submittedAt", width: 18 },
     { header: "Ngày tạo", key: "createdAt", width: 18 },
     { header: "Cập nhật lần cuối", key: "updatedAt", width: 18 },
@@ -159,7 +186,11 @@ export async function exportIdeasToExcel(
         stt: idx + 1,
         referenceCode: idea.referenceCode || idea.id,
         title: idea.title,
-        status: getIdeaDisplayBadge(idea.status, idea.projectProfile?.status).label,
+        status: getIdeaDisplayBadge(
+          idea.status,
+          idea.projectProfile?.status,
+          hasSubmittedPosterInHistory(idea.projectProfile?.history),
+        ).label,
         authorName: idea.submitter.fullName,
         studentCode: idea.submitter.studentCode,
         field: idea.field || "",
@@ -176,6 +207,12 @@ export async function exportIdeasToExcel(
         feasibility: idea.feasibility || "",
         potential: idea.potential || "",
         needsMemberSupport: idea.needsMemberSupport ? "Có" : "Không",
+        posterFolderUrl:
+          extractPosterDriveMetadata(
+            idea.projectProfile?.history,
+            idea.referenceCode,
+            idea.submitter.email,
+          )?.folderUrl || "",
         submittedAt: formatExcelDate(idea.submittedAt),
         createdAt: formatExcelDate(idea.createdAt),
         updatedAt: formatExcelDate(idea.updatedAt),

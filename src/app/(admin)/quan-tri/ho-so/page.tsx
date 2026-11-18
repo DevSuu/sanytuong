@@ -10,6 +10,8 @@ import {
   PROFILE_STATUS_LABELS,
   PROFILE_STATUS_BADGES,
 } from "@/lib/domain/profile-state-machine";
+import { POSTER_SUBMITTED_BADGE } from "@/lib/domain/idea-state-machine";
+import { hasSubmittedPosterInHistory } from "@/lib/google-drive/poster-drive-service";
 import { AdminExportButton } from "@/components/admin-export-button";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +85,12 @@ export default async function AdminProfilesPage({ searchParams }: PageProps) {
         editRequests: {
           where: { status: "PENDING" },
           select: { id: true },
+        },
+        history: {
+          select: {
+            reason: true,
+            metadata: true,
+          },
         },
       },
     }),
@@ -274,6 +282,7 @@ export default async function AdminProfilesPage({ searchParams }: PageProps) {
                     </td>
                     <td style={{ padding: "14px 16px", fontWeight: 600, maxWidth: 280 }}>
                       <div
+                        title={p.idea.title}
                         style={{
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -283,7 +292,7 @@ export default async function AdminProfilesPage({ searchParams }: PageProps) {
                         {p.idea.title}
                       </div>
                     </td>
-                    <td style={{ padding: "14px 16px" }}>
+                    <td style={{ padding: "14px 16px", minWidth: 130 }}>
                       <div>{leader.fullName}</div>
                       <div style={{ fontSize: 11, color: "var(--muted)" }}>
                         {leader.studentCode || "—"}
@@ -308,21 +317,40 @@ export default async function AdminProfilesPage({ searchParams }: PageProps) {
                       </span>
                     </td>
                     <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          whiteSpace: "nowrap",
-                          padding: "4px 10px",
-                          borderRadius: "999px",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          background: badge.bg,
-                          color: badge.color,
-                          border: `1px solid ${badge.border}`,
-                        }}
-                      >
-                        {PROFILE_STATUS_LABELS[p.status]}
-                      </span>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            whiteSpace: "nowrap",
+                            padding: "4px 10px",
+                            borderRadius: "999px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            background: badge.bg,
+                            color: badge.color,
+                            border: `1px solid ${badge.border}`,
+                          }}
+                        >
+                          {PROFILE_STATUS_LABELS[p.status]}
+                        </span>
+                        {p.status === "COMPLETED" && hasSubmittedPosterInHistory(p.history) && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              whiteSpace: "nowrap",
+                              padding: "4px 10px",
+                              borderRadius: "999px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              background: POSTER_SUBMITTED_BADGE.bg,
+                              color: POSTER_SUBMITTED_BADGE.color,
+                              border: `1px solid ${POSTER_SUBMITTED_BADGE.border}`,
+                            }}
+                          >
+                            {POSTER_SUBMITTED_BADGE.label}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                       {pendingRequests > 0 ? (

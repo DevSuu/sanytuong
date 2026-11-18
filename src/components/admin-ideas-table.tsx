@@ -24,6 +24,7 @@ import {
   IDEA_FILTER_LABELS,
   getIdeaDisplayBadge,
 } from "@/lib/domain/idea-state-machine";
+import { formatVietnamDate } from "@/lib/google-drive/poster-file-utils";
 import { AdminExportButton } from "./admin-export-button";
 
 export interface IdeaTableRow {
@@ -33,6 +34,7 @@ export interface IdeaTableRow {
   field?: string | null;
   status: IdeaStatus;
   profileStatus?: string | null;
+  hasPosterSubmitted?: boolean;
   createdAt: string;
   updatedAt: string;
   submitter: {
@@ -112,6 +114,7 @@ export function AdminIdeasTable({
             fontFamily: "monospace",
             fontWeight: 600,
             color: "var(--brand-orange)",
+            whiteSpace: "nowrap",
           }}
         >
           {info.getValue() || info.row.original.id.slice(0, 8)}
@@ -121,18 +124,33 @@ export function AdminIdeasTable({
     columnHelper.accessor("title", {
       header: "Tên ý tưởng",
       cell: (info) => (
-        <div style={{ maxWidth: 280 }}>
+        <div style={{ minWidth: 200, maxWidth: 260 }}>
           <div
+            title={info.getValue()}
             style={{
               fontWeight: 600,
               color: "var(--foreground)",
-              lineHeight: 1.3,
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
             }}
           >
             {info.getValue()}
           </div>
           {info.row.original.field && (
-            <div style={{ fontSize: 11, color: "var(--brand-orange)", marginTop: 3 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--brand-orange)",
+                marginTop: 3,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
+              }}
+            >
               {info.row.original.field}
             </div>
           )}
@@ -143,26 +161,69 @@ export function AdminIdeasTable({
       header: "Người gửi",
       cell: (info) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{info.getValue()}</div>
+          <div
+            style={{
+              fontWeight: 500,
+              minWidth: 125,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {info.getValue()}
+          </div>
         </div>
       ),
     }),
     columnHelper.accessor("submitter.studentCode", {
       header: "Mã SV",
       cell: (info) => (
-        <span style={{ fontFamily: "monospace", color: "var(--muted)" }}>
+        <span
+          title={info.getValue()}
+          style={{
+            display: "block",
+            maxWidth: 110,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontFamily: "monospace",
+            color: "var(--muted)",
+          }}
+        >
           {info.getValue()}
         </span>
       ),
     }),
     columnHelper.accessor("submitter.className", {
       header: "Lớp",
-      cell: (info) => <span>{info.getValue()}</span>,
+      cell: (info) => (
+        <span
+          title={info.getValue() || ""}
+          style={{
+            display: "block",
+            maxWidth: 100,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {info.getValue() || "—"}
+        </span>
+      ),
     }),
     columnHelper.accessor("submitter.email", {
       header: "Email",
       cell: (info) => (
-        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+        <span
+          title={info.getValue()}
+          style={{
+            display: "block",
+            maxWidth: 175,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            color: "var(--muted)",
+            fontSize: 12,
+          }}
+        >
           {info.getValue()}
         </span>
       ),
@@ -171,7 +232,7 @@ export function AdminIdeasTable({
       header: "Trạng thái",
       cell: (info) => {
         const val = info.getValue();
-        const badge = getIdeaDisplayBadge(val, info.row.original.profileStatus);
+        const badge = getIdeaDisplayBadge(val, info.row.original.profileStatus, info.row.original.hasPosterSubmitted);
         return (
           <span
             style={{
@@ -206,6 +267,7 @@ export function AdminIdeasTable({
             font: "inherit",
             color: "inherit",
             padding: 0,
+            whiteSpace: "nowrap",
           }}
         >
           <span>Ngày gửi</span>
@@ -220,26 +282,32 @@ export function AdminIdeasTable({
             whiteSpace: "nowrap",
           }}
         >
-          {new Date(info.getValue()).toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })}
+          {formatVietnamDate(info.getValue())}
         </span>
       ),
     }),
     columnHelper.display({
       id: "actions",
-      header: () => <div style={{ textAlign: "right" }}>Thao tác</div>,
+      header: () => <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>Thao tác</div>,
       cell: (info) => (
-        <div style={{ textAlign: "right", display: "inline-flex", gap: 6, justifyContent: "flex-end", width: "100%" }}>
+        <div
+          style={{
+            textAlign: "right",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            justifyContent: "flex-end",
+            width: "100%",
+            whiteSpace: "nowrap",
+          }}
+        >
           <Link
             href={`/quan-tri/y-tuong/${info.row.original.id}`}
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 4,
-              padding: "5px 12px",
+              padding: "5px 9px",
               backgroundColor: "var(--background)",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius)",
@@ -247,6 +315,7 @@ export function AdminIdeasTable({
               fontWeight: 600,
               color: "var(--foreground)",
               textDecoration: "none",
+              whiteSpace: "nowrap",
             }}
           >
             <Eye size={13} />
@@ -281,7 +350,7 @@ export function AdminIdeasTable({
               display: "inline-flex",
               alignItems: "center",
               gap: 4,
-              padding: "5px 10px",
+              padding: "5px 8px",
               backgroundColor: "#fee2e2",
               border: "1px solid #fca5a5",
               borderRadius: "var(--radius)",
@@ -289,6 +358,7 @@ export function AdminIdeasTable({
               fontWeight: 600,
               color: "#b91c1c",
               cursor: "pointer",
+              whiteSpace: "nowrap",
             }}
             title="Xóa vĩnh viễn ý tưởng này"
           >
@@ -380,7 +450,7 @@ export function AdminIdeasTable({
           </button>
         </form>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Filter size={15} style={{ color: "var(--muted)" }} />
             <select
@@ -475,12 +545,13 @@ export function AdminIdeasTable({
                     <th
                       key={header.id}
                       style={{
-                        padding: "12px 14px",
+                        padding: "11px 10px",
                         color: "var(--muted)",
                         fontSize: 11,
                         fontWeight: 600,
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {header.isPlaceholder
@@ -522,7 +593,7 @@ export function AdminIdeasTable({
                       <td
                         key={cell.id}
                         style={{
-                          padding: "12px 14px",
+                          padding: "11px 10px",
                           verticalAlign: "middle",
                         }}
                       >

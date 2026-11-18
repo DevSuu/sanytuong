@@ -78,6 +78,8 @@ export function NavigationProvider({
     ? "the-le"
     : pathname.startsWith("/san-giai-thuong") || pathname.startsWith("/giai-thuong")
     ? "giai-thuong"
+    : pathname.startsWith("/tra-cuu")
+    ? "tra-cuu"
     : (ROUTE_TO_TAB[pathname] || initialTab);
   const routeTaskSlug =
     pathname.startsWith("/nhiem-vu/") && pathname !== "/nhiem-vu/"
@@ -146,6 +148,8 @@ export function NavigationProvider({
       const isDetailPage =
         pathname.startsWith("/nhiem-vu/") ||
         pathname.startsWith("/san-giai-thuong/") ||
+        pathname.startsWith("/tra-cuu/") ||
+        pathname.startsWith("/xac-minh-email") ||
         pathname.startsWith("/quan-tri");
 
       if (isDetailPage) {

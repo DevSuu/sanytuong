@@ -17,8 +17,16 @@ import {
   STATUS_LABELS,
   PROFILE_COMPLETED_BADGE,
   PROFILE_APPROVED_BADGE,
+  POSTER_SUBMITTED_BADGE,
   getIdeaDisplayBadge,
 } from "@/lib/domain/idea-state-machine";
+import {
+  extractPosterDriveMetadata,
+  hasSubmittedPosterInHistory,
+  getPosterFolderName,
+  getPosterRootFolderName,
+} from "@/lib/google-drive/poster-drive-service";
+import { AdminPosterDrivePanel } from "@/components/admin-poster-drive-panel";
 import {
   MemberType,
   PROFILE_STATUS_LABELS,
@@ -106,7 +114,28 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
 
   const actorMap = new Map(actorUsers.map((user) => [user.id, user]));
 
-  const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
+  const hasPosterSubmitted = hasSubmittedPosterInHistory(idea.projectProfile?.history);
+  const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status, hasPosterSubmitted);
+  const leaderMemberEmail =
+    idea.projectProfile?.members.find((m) => m.isLeader)?.email || idea.submitter.email;
+  const posterDriveMeta =
+    extractPosterDriveMetadata(
+      idea.projectProfile?.history,
+      idea.referenceCode,
+      leaderMemberEmail,
+    ) || {
+      folderId: null,
+      folderName: getPosterFolderName(idea.referenceCode),
+      rootFolderName: getPosterRootFolderName(),
+      folderUrl: null,
+      editorEmail: leaderMemberEmail,
+      posterStatus: "WAITING_UPLOAD",
+      submittedAt: null,
+      leaderNote: null,
+      files: [],
+      lastCheckedAt: null,
+      driveWarning: null,
+    };
 
   return (
     <div className="container" style={{ maxWidth: 1100 }}>
@@ -137,11 +166,12 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
             gap: 16,
           }}
         >
-          <div>
+          <div style={{ minWidth: 0, flex: "1 1 300px" }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
+                flexWrap: "wrap",
                 gap: 10,
                 marginBottom: 8,
               }}
@@ -201,6 +231,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                 fontWeight: 700,
                 color: "var(--foreground)",
                 lineHeight: 1.3,
+                overflowWrap: "anywhere",
+                wordBreak: "break-word",
               }}
             >
               {idea.title}
@@ -504,6 +536,16 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
             </div>
           )}
 
+          {/* Round 2 Poster Drive Panel (shown when Round 2 profile is COMPLETED) */}
+          {idea.projectProfile && idea.projectProfile.status === "COMPLETED" && (
+            <AdminPosterDrivePanel
+              profileId={idea.projectProfile.id}
+              referenceCode={idea.referenceCode}
+              leaderEmail={leaderMemberEmail}
+              initialPosterDrive={posterDriveMeta}
+            />
+          )}
+
           {/* Detailed Proposal Sections */}
           <div
             style={{
@@ -538,6 +580,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                   lineHeight: 1.7,
                   color: "var(--foreground)",
                   whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-word",
                   backgroundColor: "var(--background)",
                   padding: 16,
                   borderRadius: "var(--radius)",
@@ -560,6 +604,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                     lineHeight: 1.7,
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     backgroundColor: "var(--background)",
                     padding: 16,
                     borderRadius: "var(--radius)",
@@ -583,6 +629,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                     lineHeight: 1.7,
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     backgroundColor: "var(--background)",
                     padding: 16,
                     borderRadius: "var(--radius)",
@@ -606,6 +654,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                     lineHeight: 1.7,
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     backgroundColor: "var(--background)",
                     padding: 16,
                     borderRadius: "var(--radius)",
@@ -629,6 +679,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                     lineHeight: 1.7,
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     backgroundColor: "var(--background)",
                     padding: 16,
                     borderRadius: "var(--radius)",
@@ -652,6 +704,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                     lineHeight: 1.7,
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                     backgroundColor: "var(--background)",
                     padding: 16,
                     borderRadius: "var(--radius)",
@@ -685,7 +739,7 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
         </div>
 
         {/* Right Column: Actions & Audit History Timeline */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
           {/* Action Panel */}
           <AdminIdeaActionPanel
             ideaId={idea.id}
@@ -771,7 +825,17 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                       let fromLabel = "Đã duyệt";
                       let targetBadge = PROFILE_COMPLETED_BADGE;
 
-                      if (ph.action === "PROFILE_SUBMITTED") {
+                      const isPosterEvent =
+                        typeof ph.reason === "string" &&
+                        ph.reason.startsWith("[POSTER_SUBMITTED]");
+                      const displayReason = isPosterEvent
+                        ? ph.reason!.replace(/^\[POSTER_SUBMITTED\]\s*/, "")
+                        : ph.reason;
+
+                      if (isPosterEvent) {
+                        fromLabel = "Đã duyệt hồ sơ Vòng 2";
+                        targetBadge = POSTER_SUBMITTED_BADGE;
+                      } else if (ph.action === "PROFILE_SUBMITTED") {
                         fromLabel = "Đã duyệt";
                         targetBadge = PROFILE_COMPLETED_BADGE;
                       } else if (ph.action === "PROFILE_COMPLETED") {
@@ -825,7 +889,7 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                         fromLabel,
                         targetBadge,
                         actorDisplay,
-                        reason: ph.reason,
+                        reason: displayReason,
                       };
                     }),
                 ]
@@ -912,6 +976,8 @@ export default async function AdminIdeaDetailPage({ params }: PageProps) {
                             fontSize: 12,
                             color: "var(--foreground)",
                             fontStyle: "italic",
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                           }}
                         >
                           &ldquo;{history.reason}&rdquo;

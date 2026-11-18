@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { Prisma, IdeaStatus } from "@/generated/prisma/client";
 import { AdminIdeasTable, IdeaTableRow } from "@/components/admin-ideas-table";
 import { IDEA_FILTER_STATUS, IdeaFilterStatus } from "@/lib/domain/idea-state-machine";
+import { hasSubmittedPosterInHistory } from "@/lib/google-drive/poster-drive-service";
 
 export const metadata = {
   title: "Danh sách Ý tưởng — Quản trị UTT",
@@ -64,6 +65,23 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
       status: IdeaStatus.APPROVED,
       projectProfile: {
         status: "COMPLETED",
+        history: {
+          none: {
+            reason: { startsWith: "[POSTER_SUBMITTED]" },
+          },
+        },
+      },
+    });
+  } else if (validStatus === "POSTER_SUBMITTED") {
+    andConditions.push({
+      status: IdeaStatus.APPROVED,
+      projectProfile: {
+        status: "COMPLETED",
+        history: {
+          some: {
+            reason: { startsWith: "[POSTER_SUBMITTED]" },
+          },
+        },
       },
     });
   } else if (validStatus === IdeaStatus.APPROVED) {
@@ -121,6 +139,12 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
         projectProfile: {
           select: {
             status: true,
+            history: {
+              select: {
+                reason: true,
+                metadata: true,
+              },
+            },
           },
         },
       },
@@ -134,6 +158,7 @@ export default async function AdminIdeasListPage({ searchParams }: PageProps) {
     field: idea.field,
     status: idea.status,
     profileStatus: idea.projectProfile?.status ?? null,
+    hasPosterSubmitted: hasSubmittedPosterInHistory(idea.projectProfile?.history),
     createdAt: idea.createdAt.toISOString(),
     updatedAt: idea.updatedAt.toISOString(),
     submitter: {

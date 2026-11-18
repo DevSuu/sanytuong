@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { STATUS_LABELS, getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
+import { hasSubmittedPosterInHistory } from "@/lib/google-drive/poster-drive-service";
 import { PROFILE_STATUS_LABELS } from "@/lib/domain/profile-state-machine";
 import {
   TASK_STATUS_LABELS,
@@ -289,7 +290,21 @@ export async function buildFullGoogleSheetsPayload(
   ] = await Promise.all([
     db.idea.findMany({
       orderBy: { createdAt: "desc" },
-      include: { submitter: true, projectProfile: { select: { status: true } } },
+      include: {
+        submitter: true,
+        projectProfile: {
+          select: {
+            status: true,
+            history: {
+              select: {
+                action: true,
+                reason: true,
+                metadata: true,
+              },
+            },
+          },
+        },
+      },
     }),
     db.submitter.findMany({
       orderBy: { createdAt: "desc" },
@@ -445,7 +460,13 @@ export async function buildFullGoogleSheetsPayload(
       cell(idea.id),
       cell(idea.referenceCode),
       cell(idea.title),
-      cell(getIdeaDisplayBadge(idea.status, idea.projectProfile?.status).label),
+      cell(
+        getIdeaDisplayBadge(
+          idea.status,
+          idea.projectProfile?.status,
+          hasSubmittedPosterInHistory(idea.projectProfile?.history),
+        ).label,
+      ),
       cell(idea.status),
       idea.version,
       cell(idea.field),

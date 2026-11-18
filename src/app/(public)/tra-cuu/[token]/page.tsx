@@ -1,16 +1,17 @@
 import { getDb } from "@/lib/db";
 import { hashToken } from "@/lib/crypto";
-import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
+import {
+  hasSubmittedPosterInHistory,
+  extractPosterDriveMetadata,
+} from "@/lib/google-drive/poster-drive-service";
 import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_STATUS_BADGES,
 } from "@/lib/domain/task-state-machine";
-import { AlertCircle, AlertTriangle, Clock, Calendar, Hash, FileText, Briefcase, Building2, Users } from "lucide-react";
+import { AlertCircle, Clock, FileText, Briefcase, Building2, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ProjectProfileLeaderPanel } from "@/components/project-profile-leader-panel";
-import { LeaderRecruitmentPanel } from "@/components/leader-recruitment-panel";
-import { IdeaEditModal } from "@/components/idea-edit-modal";
+import { LookupIdeasWorkspace, LookupWorkspaceIdeaItem } from "@/components/lookup-ideas-workspace";
 import { LookupTokenSync } from "@/components/lookup-token-sync";
 
 export const dynamic = "force-dynamic";
@@ -131,14 +132,6 @@ export default async function PermanentLookupPage({
   }
 
   const { ideas, taskApplications } = submitter;
-  const ideasNeedingProfile = ideas.filter(
-    (idea) =>
-      idea.status === "APPROVED" &&
-      (!idea.projectProfile ||
-        idea.projectProfile.status === "NOT_STARTED" ||
-        idea.projectProfile.status === "DRAFT" ||
-        idea.projectProfile.status === "NEEDS_REVISION"),
-  );
 
   return (
     <div className="container page-shell" style={{ maxWidth: 860 }}>
@@ -162,7 +155,7 @@ export default async function PermanentLookupPage({
           alignItems: "center",
           gap: 12,
           borderLeft: "4px solid var(--brand-orange)",
-          marginBottom: ideasNeedingProfile.length > 0 ? 16 : 32,
+          marginBottom: 32,
         }}
       >
         <Clock size={20} style={{ color: "var(--brand-orange)", flexShrink: 0 }} />
@@ -171,41 +164,6 @@ export default async function PermanentLookupPage({
         </div>
       </div>
 
-      {ideasNeedingProfile.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 14,
-            padding: "16px 18px",
-            borderRadius: "10px",
-            background: "rgba(234, 88, 12, 0.09)",
-            border: "1px solid rgba(234, 88, 12, 0.35)",
-            borderLeft: "4px solid var(--brand-orange)",
-            marginBottom: 32,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: "1 1 260px" }}>
-            <AlertTriangle size={20} style={{ color: "var(--brand-orange)", flexShrink: 0, marginTop: 2 }} />
-            <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "var(--foreground)" }}>
-              <strong style={{ color: "var(--brand-orange)", display: "block", marginBottom: 2 }}>
-                Yêu cầu hoàn thiện hồ sơ Vòng 2 ({ideasNeedingProfile.length} đề tài):
-              </strong>
-              Ý tưởng của bạn đã vượt qua Vòng 1! Vui lòng kê khai đầy đủ danh sách <strong>Thành viên tham gia &amp; Giảng viên hướng dẫn</strong> và nhấn <strong>&ldquo;Gửi hồ sơ cho Ban tổ chức&rdquo;</strong> để xác nhận tham gia Vòng 2.
-            </div>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            style={{ backgroundColor: "var(--brand-orange)", color: "#fff", flexShrink: 0 }}
-          >
-            <a href={`#ho-so-vong-2-${ideasNeedingProfile[0].id}`}>Hoàn thiện hồ sơ ngay</a>
-          </Button>
-        </div>
-      )}
-
       {/* SECTION 1: Ý TƯỞNG DỰ THI (PHASE 2A & 2C) */}
       <div style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: "clamp(17px, 4vw, 20px)", fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
@@ -213,212 +171,71 @@ export default async function PermanentLookupPage({
           Ý tưởng dự thi của bạn ({ideas.length})
         </h2>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {ideas.length === 0 ? (
-            <div className="form-panel" style={{ width: "100%", textAlign: "center", padding: 40 }}>
-              <FileText size={40} style={{ margin: "0 auto 12px", color: "var(--muted)" }} />
-              <p>Bạn chưa có ý tưởng nào trong hệ thống.</p>
-              <Button asChild style={{ marginTop: 16 }}>
-                <Link href="/gui-y-tuong">Gửi ý tưởng ngay</Link>
-              </Button>
-            </div>
-          ) : (
-            ideas.map((idea) => {
-              const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
+        {ideas.length === 0 ? (
+          <div className="form-panel" style={{ width: "100%", textAlign: "center", padding: 40 }}>
+            <FileText size={40} style={{ margin: "0 auto 12px", color: "var(--muted)" }} />
+            <p>Bạn chưa có ý tưởng nào trong hệ thống.</p>
+            <Button asChild style={{ marginTop: 16 }}>
+              <Link href="/gui-y-tuong">Gửi ý tưởng ngay</Link>
+            </Button>
+          </div>
+        ) : (
+          <LookupIdeasWorkspace
+            token={token}
+            submitter={{
+              fullName: submitter.fullName,
+              studentCode: submitter.studentCode,
+              className: submitter.className,
+              major: submitter.major,
+              phone: submitter.phone,
+              email: submitter.email,
+              bankAccountNumber: submitter.bankAccountNumber,
+              bankName: submitter.bankName,
+              bankBranch: submitter.bankBranch,
+            }}
+            ideas={ideas.map((idea): LookupWorkspaceIdeaItem => {
               const latestHistory = idea.statusHistory[0];
               const btcFeedbackHistory = idea.statusHistory.find(
-                (h) => h.newStatus === "NEEDS_REVISION" || h.actorType === "ADMIN"
+                (h) => h.newStatus === "NEEDS_REVISION" || h.actorType === "ADMIN",
               );
               const feedbackToShow =
                 idea.status === "NEEDS_REVISION"
                   ? btcFeedbackHistory?.reason || latestHistory?.reason
                   : latestHistory?.reason;
 
-              return (
-                <div
-                  key={idea.id}
-                  className="form-panel"
-                  style={{
-                    width: "100%",
-                    padding: "clamp(16px, 4vw, 24px)",
-                    borderRadius: "12px",
-                    border: "1px solid var(--border)",
-                    background: "var(--surface)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      marginBottom: 16,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "var(--brand-orange)",
-                          background: "rgba(242, 92, 5, 0.1)",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        <Hash size={14} />
-                        {idea.referenceCode}
-                      </span>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          fontSize: 12,
-                          color: "var(--muted)",
-                          gap: 4,
-                        }}
-                      >
-                        <Calendar size={13} />
-                        {new Date(idea.createdAt).toLocaleDateString("vi-VN")}
-                      </span>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span
-                        style={{
-                          padding: "4px 12px",
-                          borderRadius: "999px",
-                          fontSize: 12,
-                          fontWeight: 600,
-                          background: badge.bg,
-                          color: badge.color,
-                          border: `1px solid ${badge.border}`,
-                        }}
-                      >
-                        {badge.label}
-                      </span>
-
-                      {idea.status === "NEEDS_REVISION" && (
-                        <IdeaEditModal
-                          idea={idea}
-                          submitter={submitter}
-                          lookupToken={token}
-                          latestFeedback={feedbackToShow}
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 10px 0", overflowWrap: "anywhere" }}>
-                    {idea.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: 14,
-                      color: "var(--muted)",
-                      lineHeight: 1.6,
-                      whiteSpace: "pre-wrap",
-                      overflowWrap: "anywhere",
-                      margin: 0,
-                    }}
-                  >
-                    {idea.description}
-                  </p>
-
-                  {/* Show feedback if in NEEDS_REVISION or REJECTED */}
-                  {feedbackToShow && (idea.status === "NEEDS_REVISION" || idea.status === "REJECTED" || idea.status === "APPROVED") && (
-                    <div
-                      style={{
-                        marginTop: 18,
-                        padding: "14px 16px",
-                        borderRadius: "8px",
-                        background:
-                          idea.status === "NEEDS_REVISION"
-                            ? "rgba(217, 119, 6, 0.08)"
-                            : idea.status === "APPROVED"
-                            ? "rgba(22, 163, 74, 0.08)"
-                            : "rgba(220, 38, 38, 0.08)",
-                        border: `1px solid ${badge.border}`,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: badge.color,
-                          marginBottom: 4,
-                        }}
-                      >
-                        Phản hồi từ Ban tổ chức:
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.5, overflowWrap: "anywhere" }}>
-                        {feedbackToShow}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Notice for resubmitted ideas pending review */}
-                  {idea.status === "SUBMITTED" && idea.statusHistory.some((h) => h.oldStatus === "NEEDS_REVISION") && (
-                    <div
-                      style={{
-                        marginTop: 18,
-                        padding: "14px 16px",
-                        borderRadius: "8px",
-                        background: "rgba(2, 132, 199, 0.08)",
-                        border: "1px solid rgba(2, 132, 199, 0.25)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: "#0284c7",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Thông báo từ Hệ thống:
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.5 }}>
-                        Hồ sơ ý tưởng đã được chỉnh sửa và gửi lại thành công. Đang chờ Ban tổ chức xem xét lại.
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Phase 2C & Revision 2: Project Profile, Members & Recruitment for APPROVED Ideas */}
-                  {idea.status === "APPROVED" && (
-                    <div id={`ho-so-vong-2-${idea.id}`} style={{ scrollMarginTop: 92 }}>
-                      <ProjectProfileLeaderPanel
-                        key={
-                          idea.projectProfile?.id
-                            ? `${idea.projectProfile.id}-${idea.projectProfile.version}`
-                            : idea.id
-                        }
-                        ideaId={idea.id}
-                        initialTitle={idea.title}
-                        lookupToken={token}
-                        submitter={{
-                          fullName: submitter.fullName,
-                          studentCode: submitter.studentCode,
-                          className: submitter.className ?? "",
-                          email: submitter.email,
-                        }}
-                        initialProfile={idea.projectProfile}
-                      />
-                      <LeaderRecruitmentPanel
-                        ideaId={idea.id}
-                        lookupToken={token}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+              return {
+                id: idea.id,
+                referenceCode: idea.referenceCode,
+                title: idea.title,
+                description: idea.description,
+                field: idea.field,
+                expectedProduct: idea.expectedProduct,
+                necessity: idea.necessity,
+                innovation: idea.innovation,
+                feasibility: idea.feasibility,
+                potential: idea.potential,
+                needsMemberSupport: idea.needsMemberSupport,
+                version: idea.version,
+                status: idea.status,
+                createdAt: idea.createdAt.toISOString(),
+                latestFeedback: feedbackToShow,
+                wasResubmittedAfterRevision: idea.statusHistory.some(
+                  (h) => h.oldStatus === "NEEDS_REVISION",
+                ),
+                hasPosterSubmitted: hasSubmittedPosterInHistory(
+                  idea.projectProfile?.history,
+                ),
+                projectProfile: idea.projectProfile,
+                posterDrive: extractPosterDriveMetadata(
+                  idea.projectProfile?.history,
+                  idea.referenceCode,
+                  idea.projectProfile?.members.find((m) => m.isLeader)?.email ||
+                    submitter.email,
+                ),
+              };
+            })}
+          />
+        )}
       </div>
 
       {/* SECTION 2: NHIỆM VỤ ĐÃ ĐĂNG KÝ (PHASE 3) */}

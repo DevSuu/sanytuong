@@ -13,11 +13,13 @@ import {
   ArrowRight,
   Eye,
   Sparkles,
+  FileCheck2,
 } from "lucide-react";
 import { getAdminSession } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { IdeaStatus, EmailJobStatus, EmailJobType } from "@/generated/prisma/client";
 import { getIdeaDisplayBadge } from "@/lib/domain/idea-state-machine";
+import { hasSubmittedPosterInHistory } from "@/lib/google-drive/poster-drive-service";
 import { getEmailJobPriority } from "@/lib/email/queue";
 import { getGoogleSheetsConfig } from "@/lib/google-sheets/sync-service";
 import { AdminGoogleSheetsPanel } from "@/components/admin-google-sheets-panel";
@@ -68,7 +70,9 @@ export default async function AdminDashboardPage() {
     totalRecruitmentPosts,
     recentIdeas,
     googleSheetsConfig,
-    profileCompletedCount,
+    profileSubmittedCount,
+    profileApprovedWaitingPosterCount,
+    posterSubmittedCount,
   ] = await Promise.all([
     db.idea.count(),
     db.idea.groupBy({
@@ -112,6 +116,12 @@ export default async function AdminDashboardPage() {
         projectProfile: {
           select: {
             status: true,
+            history: {
+              select: {
+                reason: true,
+                metadata: true,
+              },
+            },
           },
         },
       },
@@ -121,7 +131,33 @@ export default async function AdminDashboardPage() {
       where: {
         status: IdeaStatus.APPROVED,
         projectProfile: {
-          status: { in: ["SUBMITTED", "COMPLETED"] },
+          status: "SUBMITTED",
+        },
+      },
+    }),
+    db.idea.count({
+      where: {
+        status: IdeaStatus.APPROVED,
+        projectProfile: {
+          status: "COMPLETED",
+          history: {
+            none: {
+              reason: { startsWith: "[POSTER_SUBMITTED]" },
+            },
+          },
+        },
+      },
+    }),
+    db.idea.count({
+      where: {
+        status: IdeaStatus.APPROVED,
+        projectProfile: {
+          status: "COMPLETED",
+          history: {
+            some: {
+              reason: { startsWith: "[POSTER_SUBMITTED]" },
+            },
+          },
         },
       },
     }),
@@ -199,7 +235,13 @@ export default async function AdminDashboardPage() {
     },
     {
       title: "Đã duyệt (Chờ HS Vòng 2)",
-      count: Math.max(0, statusCounts.APPROVED - profileCompletedCount),
+      count: Math.max(
+        0,
+        statusCounts.APPROVED -
+          profileSubmittedCount -
+          profileApprovedWaitingPosterCount -
+          posterSubmittedCount,
+      ),
       href: "/quan-tri/y-tuong?status=APPROVED",
       icon: CheckCircle2,
       color: "#16a34a",
@@ -208,12 +250,30 @@ export default async function AdminDashboardPage() {
     },
     {
       title: "Đã hoàn thiện hồ sơ",
-      count: profileCompletedCount,
+      count: profileSubmittedCount,
       href: "/quan-tri/y-tuong?status=PROFILE_COMPLETED",
       icon: CheckCircle2,
       color: "#7c3aed",
       bg: "rgba(124, 58, 237, 0.08)",
-      desc: "Đã nộp đủ thành viên & GVHD Vòng 2",
+      desc: "Đã gửi HS Vòng 2 • Chờ BTC duyệt",
+    },
+    {
+      title: "Đã duyệt HS Vòng 2",
+      count: profileApprovedWaitingPosterCount,
+      href: "/quan-tri/y-tuong?status=PROFILE_APPROVED",
+      icon: CheckCircle2,
+      color: "#0d9488",
+      bg: "rgba(13, 148, 136, 0.08)",
+      desc: "Chờ đội tải Poster lên hệ thống",
+    },
+    {
+      title: "Đã nộp Poster",
+      count: posterSubmittedCount,
+      href: "/quan-tri/y-tuong?status=POSTER_SUBMITTED",
+      icon: FileCheck2,
+      color: "#0284c7",
+      bg: "rgba(2, 132, 199, 0.08)",
+      desc: "Đã hoàn tất nộp Poster Vòng 2",
     },
     {
       title: "Đã từ chối",
@@ -465,7 +525,11 @@ export default async function AdminDashboardPage() {
               </thead>
               <tbody>
                 {recentIdeas.map((idea) => {
-                  const badge = getIdeaDisplayBadge(idea.status, idea.projectProfile?.status);
+                  const badge = getIdeaDisplayBadge(
+                    idea.status,
+                    idea.projectProfile?.status,
+                    hasSubmittedPosterInHistory(idea.projectProfile?.history),
+                  );
                   return (
                     <tr
                       key={idea.id}
@@ -492,6 +556,7 @@ export default async function AdminDashboardPage() {
                         }}
                       >
                         <div
+                          title={idea.title}
                           style={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -501,7 +566,7 @@ export default async function AdminDashboardPage() {
                           {idea.title}
                         </div>
                       </td>
-                      <td style={{ padding: "12px" }}>
+                      <td style={{ padding: "12px", minWidth: 130 }}>
                         <div>{idea.submitter.fullName}</div>
                         <div style={{ fontSize: 11, color: "var(--muted)" }}>
                           {idea.submitter.studentCode} • {idea.submitter.className}

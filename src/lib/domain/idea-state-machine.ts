@@ -144,6 +144,7 @@ export const IDEA_FILTER_STATUS = {
   ...IdeaStatus,
   PROFILE_COMPLETED: "PROFILE_COMPLETED",
   PROFILE_APPROVED: "PROFILE_APPROVED",
+  POSTER_SUBMITTED: "POSTER_SUBMITTED",
 } as const;
 
 export type IdeaFilterStatus =
@@ -157,6 +158,7 @@ export const IDEA_FILTER_LABELS: Record<IdeaFilterStatus, string> = {
   APPROVED: "Đã duyệt",
   PROFILE_COMPLETED: "Đã hoàn thiện hồ sơ",
   PROFILE_APPROVED: "Đã duyệt hồ sơ Vòng 2",
+  POSTER_SUBMITTED: "Đã nộp Poster",
   REJECTED: "Đã từ chối",
 };
 
@@ -174,6 +176,13 @@ export const PROFILE_APPROVED_BADGE = {
   border: "rgba(13, 148, 136, 0.35)",
 };
 
+export const POSTER_SUBMITTED_BADGE = {
+  label: "Đã nộp Poster",
+  bg: "rgba(2, 132, 199, 0.14)",
+  color: "#0284c7",
+  border: "rgba(2, 132, 199, 0.35)",
+};
+
 export function isIdeaProfileCompleted(
   ideaStatus: IdeaStatus | string,
   profileStatus?: string | null,
@@ -187,8 +196,12 @@ export function isIdeaProfileCompleted(
 export function getIdeaDisplayBadge(
   ideaStatus: IdeaStatus,
   profileStatus?: string | null,
+  hasPosterSubmitted?: boolean,
 ): { label: string; bg: string; color: string; border: string } {
   if (ideaStatus === IdeaStatus.APPROVED) {
+    if (profileStatus === "COMPLETED" && hasPosterSubmitted) {
+      return POSTER_SUBMITTED_BADGE;
+    }
     if (profileStatus === "COMPLETED") {
       return PROFILE_APPROVED_BADGE;
     }
